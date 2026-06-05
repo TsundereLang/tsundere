@@ -1,6 +1,6 @@
 {
   "name": "@tsundere/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tsundere is a strict Discord-focused language for .yuri files that transpiles to JavaScript/TypeScript.",
   "homepage": "https://tsundere.dev",
   "repository": {

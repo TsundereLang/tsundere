@@ -228,7 +228,7 @@ async function refreshBundledDiscordRuntime(cwd: string): Promise<void> {
   await cp(sourceDist, targetDist, { recursive: true, force: true });
   await writeFile(resolve(targetRoot, "package.json"), `${JSON.stringify({
     name: "@tsundere/discord",
-    version: "0.1.0",
+    version: "0.1.1",
     type: "module",
     exports: { ".": "./dist/index.js" },
     types: "./dist/index.d.ts",

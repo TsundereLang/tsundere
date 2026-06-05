@@ -2,7 +2,7 @@
   "name": "vscode-tsundere",
   "displayName": "Tsundere",
   "description": "VS Code support for Tsundere .yuri files.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "tsundere",
   "repository": {
     "type": "git",

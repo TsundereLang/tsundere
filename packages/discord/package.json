@@ -1,6 +1,6 @@
 {
   "name": "@tsundere/discord",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed Discord API bindings and builders for Tsundere .yuri projects.",
   "type": "module",
   "exports": {

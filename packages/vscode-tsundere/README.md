@@ -27,7 +27,7 @@ npm run package
 This emits a `.vsix` file that can be installed in VS Code:
 
 ```sh
-code --install-extension vscode-tsundere-0.1.0.vsix
+code --install-extension vscode-tsundere-0.1.1.vsix
 ```
 
 ## Logo

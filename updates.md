@@ -5,7 +5,7 @@
 
 ## Linux, Plugins, Package Manager, and Discord Tooling
 
-**Version:** `0.1.0`
+**Version:** `0.1.1`
 
 This update moves active work onto the `linux-testing` branch and focuses on the parts that are about to matter most: Linux installs, package management, plugins, Discord tooling, moderation examples, and release publishing.
 

@@ -92,8 +92,8 @@ export async function createTypeCacheKey(cwd: string, graph: TypeGraph): Promise
   const input = JSON.stringify({
     sources: graph.sources.map((source) => ({ packageName: source.packageName, version: source.version, hash: source.hash })),
     lockHash: await hashFiles(lockfiles),
-    compiler: "tsundere-0.1.0",
-    yurils: "0.1.0"
+    compiler: "tsundere-0.1.1",
+    yurils: "0.1.1"
   });
   return createHash("sha256").update(input).digest("hex");
 }
