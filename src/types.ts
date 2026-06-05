@@ -7,6 +7,10 @@ export interface TsundereConfig {
   target: TsundereTarget;
   strict: boolean;
   sourceMaps: boolean;
+  storePath?: string;
+  linkMode?: "auto" | "hardlink" | "copy";
+  strictDependencies?: boolean;
+  themeLogs?: boolean;
   runtime?: "node" | "bun" | "deno" | "cloudflare" | "vercel" | "netlify" | "aws-lambda" | "azure-functions";
   plugins?: string[];
   enterprise?: {

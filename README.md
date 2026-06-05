@@ -37,6 +37,7 @@ Tsundere is not trying to be a giant prebuilt bot. It does not ship economy, tic
 - Automatic command discovery for `src/commands`
 - `tsundere dev` with build, run, watch, and restart
 - `tsundere build` plus `tsundere start`
+- npm-first package optimization with a reusable Tsundere store
 - Local GitBook-style docs with search, light mode, and dark mode
 - VS Code and Cursor extension package
 - Discord IntelliSense metadata generation
@@ -112,6 +113,9 @@ tsundere docs
 tsundere version
 tsundere updater
 tsundere update discord.js
+tsundere store path
+tsundere store prune
+tsundere cache clean
 tsundere runtime install
 tsundere commands sync
 tsundere types sync
@@ -123,6 +127,50 @@ tsundere types sync
 
 ```powershell
 tsundere update discord.js
+```
+
+## Package Optimizer
+
+`tsundere install` wraps normal `npm install` and keeps `package.json`, `package-lock.json`, npm scripts, and Node resolution compatible. Around npm, Tsundere adds a small optimization layer that reuses validated package directories from a global store before npm runs, then stores fresh packages after a successful install.
+
+Default store:
+
+```powershell
+tsundere store path
+```
+
+Default location:
+
+```text
+~/.tsundere/store
+```
+
+Configuration lives in `tsundere.config.json`:
+
+```json
+{
+  "storePath": "~/.tsundere/store",
+  "linkMode": "auto",
+  "strictDependencies": false,
+  "themeLogs": true
+}
+```
+
+`linkMode` can be `auto`, `hardlink`, or `copy`. `auto` and `hardlink` try safe file hard links first and fall back to copying when the filesystem does not support links. Tsundere validates store metadata and package directory hashes before reuse, never deletes project files during optimization, and only prunes files inside the configured store.
+
+Maintenance commands:
+
+```powershell
+tsundere store prune
+tsundere cache clean
+tsundere doctor
+```
+
+Install output includes elapsed time, cache hits and misses, reused package count, and copied versus linked packages. The logs keep the Tsundere flavor without getting in your way:
+
+```text
+Tch... dependencies installed in 1.42s.
+Tsundere optimizer: 18 cache hits, 3 misses, 18 reused.
 ```
 
 ## Local Runtime

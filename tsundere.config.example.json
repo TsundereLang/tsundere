@@ -1,0 +1,12 @@
+{
+  "name": "tsundere-app",
+  "source": "src",
+  "outDir": "build",
+  "target": "typescript",
+  "strict": true,
+  "sourceMaps": true,
+  "storePath": "~/.tsundere/store",
+  "linkMode": "auto",
+  "strictDependencies": false,
+  "themeLogs": true
+}

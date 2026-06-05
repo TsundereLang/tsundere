@@ -9,6 +9,7 @@ import { buildProject, devProject, runBuiltProject } from "./compiler/project.js
 import { walk } from "./fs.js";
 import { cleanDiscordTypes, doctorDiscordTypes, inspectDiscordType, syncDiscordTypes } from "./type-bridge/cache.js";
 import { writeCommandManifest } from "./commands/discovery.js";
+import { cleanStore, optimizedNpmInstall, optimizerDoctor, pruneStore, readStorePath } from "./package-optimizer.js";
 
 const [, , command = "help", ...args] = process.argv;
 const cliRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -32,6 +33,10 @@ async function run(command: string, args: string[]): Promise<number> {
       return pnpm(["remove", ...args]);
     case "install":
       return installPackages(args);
+    case "store":
+      return store(args);
+    case "cache":
+      return cache(args);
     case "update":
       return pnpm(["update", ...args]);
     case "updater":
@@ -76,7 +81,9 @@ async function installPackages(args: string[]): Promise<number> {
   if (wantsDiscord) {
     await ensureProjectDiscordRuntime();
   }
-  return args.length > 0 ? pnpm(["add", ...args]) : pnpm(["install"]);
+  const config = await loadConfig();
+  const npmArgs = args.length > 0 ? ["install", ...mapBundledPackages(args)] : ["install"];
+  return optimizedNpmInstall(npmArgs, { config });
 }
 
 async function runtime(args: string[]): Promise<number> {
@@ -209,15 +216,46 @@ async function doctor(): Promise<number> {
   console.log(`  output: ${config.outDir}`);
   console.log(`  target: ${config.target}`);
   console.log(`  strict: ${config.strict ? "on" : "off"}`);
-  const pnpmCode = await pnpm(["--version"], { quiet: true });
-  console.log(`  pnpm: ${pnpmCode === 0 ? "available" : "missing"}`);
-  return pnpmCode === 0 ? 0 : 1;
+  const packageDoctor = await optimizerDoctor(config);
+  for (const line of packageDoctor.lines) {
+    console.log(line);
+  }
+  return packageDoctor.ok ? 0 : 1;
+}
+
+async function store(args: string[]): Promise<number> {
+  const action = args[0] ?? "path";
+  const config = await loadConfig();
+  if (action === "path") {
+    console.log(await readStorePath(config));
+    return 0;
+  }
+  if (action === "prune") {
+    const result = await pruneStore(config);
+    console.log(`Tch... store pruned at ${result.storePath}`);
+    console.log(`Removed ${result.removedEntries} entr${result.removedEntries === 1 ? "y" : "ies"} and ${formatBytes(result.removedBytes)}.`);
+    console.log(`Kept ${result.keptEntries} referenced entr${result.keptEntries === 1 ? "y" : "ies"}.`);
+    return 0;
+  }
+  throw new Error("Unknown store command. Try: tsundere store path|prune");
+}
+
+async function cache(args: string[]): Promise<number> {
+  const action = args[0] ?? "clean";
+  if (action !== "clean") {
+    throw new Error("Unknown cache command. Try: tsundere cache clean");
+  }
+  const config = await loadConfig();
+  const result = await cleanStore(config);
+  console.log(`Tch... cache cleaned at ${result.storePath}`);
+  console.log(`Freed ${formatBytes(result.removedBytes)} from the Tsundere store.`);
+  return 0;
 }
 
 async function test(args: string[]): Promise<number> {
   const packagePath = resolve(process.cwd(), "package.json");
   if (existsSync(packagePath)) {
-    const manifest = JSON.parse(await readFile(packagePath, "utf8")) as { scripts?: Record<string, string> };
+    const manifest = JSON.parse(stripBom(await readFile(packagePath, "utf8"))) as { scripts?: Record<string, string> };
     if (manifest.scripts?.["test:yuri"]) {
       return pnpm(["run", "test:yuri", ...args]);
     }
@@ -419,6 +457,9 @@ Usage:
   tsundere add <package>
   tsundere remove <package>
   tsundere install
+  tsundere store path
+  tsundere store prune
+  tsundere cache clean
   tsundere update [package]
   tsundere updater [check|self|info]
   tsundere version
@@ -437,6 +478,16 @@ Usage:
   tsundere runtime install
   tsundere commands sync
 `);
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function packageVersion(): string {
@@ -599,7 +650,7 @@ async function ensureProjectDiscordRuntime(forceManifest = false): Promise<void>
   if (!existsSync(packagePath)) {
     return;
   }
-  const manifest = JSON.parse(await readFile(packagePath, "utf8")) as {
+  const manifest = JSON.parse(stripBom(await readFile(packagePath, "utf8"))) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
@@ -614,7 +665,11 @@ async function ensureProjectDiscordRuntime(forceManifest = false): Promise<void>
 }
 
 function readFileSyncText(path: string): string {
-  return readFileSync(path, "utf8");
+  return stripBom(readFileSync(path, "utf8"));
+}
+
+function stripBom(value: string): string {
+  return value.charCodeAt(0) === 0xfeff ? value.slice(1) : value;
 }
 
 function templateMain(name: string, template: string): string {

@@ -5,6 +5,10 @@
   "target": "typescript",
   "strict": true,
   "sourceMaps": true,
+  "storePath": "~/.tsundere/store",
+  "linkMode": "auto",
+  "strictDependencies": false,
+  "themeLogs": true,
   "discord": {
     "tokenEnv": "DISCORD_TOKEN",
     "defaultIntents": ["Guilds"]

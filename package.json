@@ -23,6 +23,7 @@
     "lint": "node dist/cli.js lint",
     "commands:sync": "node dist/cli.js commands sync",
     "test": "node dist/cli.js test",
+    "test:unit": "npm run build && node --test tests/*.test.mjs",
     "doctor": "node dist/cli.js doctor",
     "vscode:build": "npm --prefix packages/vscode-tsundere run build",
     "vscode:package": "npm --prefix packages/vscode-tsundere run package",
