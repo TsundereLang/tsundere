@@ -27,7 +27,7 @@ export async function loadConfig(cwd = process.cwd(), environment = process.env.
     if (!existsSync(configPath)) {
       continue;
     }
-    const raw = await readFile(configPath, "utf8");
+    const raw = stripBom(await readFile(configPath, "utf8"));
     const parsed = JSON.parse(raw) as Partial<TsundereConfig>;
     config = mergeConfig(config, parsed);
     loaded = true;
@@ -51,6 +51,10 @@ export function validateConfig(config: TsundereConfig, filename = "tsundere.conf
     throw new Error(`${filename}: "target" must be "javascript" or "typescript".`);
   }
   return config;
+}
+
+function stripBom(value: string): string {
+  return value.charCodeAt(0) === 0xfeff ? value.slice(1) : value;
 }
 
 function mergeConfig(base: TsundereConfig, override: Partial<TsundereConfig>): TsundereConfig {
