@@ -3,13 +3,13 @@ import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawn } from "node:child_process";
 import { loadConfig, validateConfig } from "./config.js";
 import { buildProject, devProject, runBuiltProject } from "./compiler/project.js";
 import { walk } from "./fs.js";
 import { cleanDiscordTypes, doctorDiscordTypes, inspectDiscordType, syncDiscordTypes } from "./type-bridge/cache.js";
 import { writeCommandManifest } from "./commands/discovery.js";
 import { cleanStore, optimizedNpmInstall, optimizerDoctor, pruneStore, readStorePath } from "./package-optimizer.js";
+import { commandExists, currentPlatform, ensureExecutable, ensureTsunderePaths, openFileCommand, platformExecutable, platformLabel, runCommand, runtimeChecks, tsunderePaths } from "./platform/index.js";
 
 const [, , command = "help", ...args] = process.argv;
 const cliRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -236,6 +236,21 @@ async function doctor(): Promise<number> {
   console.log(`  output: ${config.outDir}`);
   console.log(`  target: ${config.target}`);
   console.log(`  strict: ${config.strict ? "on" : "off"}`);
+  console.log(`  platform: ${platformLabel()}`);
+  const paths = tsunderePaths();
+  await ensureTsunderePaths(paths);
+  console.log(`  tsundere home: ${paths.root}`);
+  console.log(`  config: ${paths.config}`);
+  console.log(`  cache: ${paths.cache}`);
+  console.log(`  logs: ${paths.logs}`);
+  for (const check of await runtimeChecks()) {
+    console.log(`  ${check.name}: ${check.available ? "available" : "missing"} (${check.command})`);
+  }
+  if (currentPlatform() === "linux") {
+    console.log("  linux shell: sh-compatible command lookup enabled");
+    await ensureLinuxExecutables();
+    console.log("  linux permissions: executable scripts checked");
+  }
   const packageDoctor = await optimizerDoctor(config);
   for (const line of packageDoctor.lines) {
     console.log(line);
@@ -270,6 +285,18 @@ async function cache(args: string[]): Promise<number> {
   console.log(`Tch... cache cleaned at ${result.storePath}`);
   console.log(`Freed ${formatBytes(result.removedBytes)} from the Tsundere store.`);
   return 0;
+}
+
+async function ensureLinuxExecutables(): Promise<void> {
+  const candidates = [
+    resolve(cliRoot, "dist", "cli.js"),
+    resolve(cliRoot, "scripts", "install-linux.sh")
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      await ensureExecutable(candidate, "linux");
+    }
+  }
 }
 
 async function test(args: string[]): Promise<number> {
@@ -377,21 +404,15 @@ async function types(args: string[]): Promise<number> {
 
 async function pnpm(args: string[], options: { quiet?: boolean } = {}): Promise<number> {
   const packageArgs = withWorkspaceRootFlag(mapBundledPackages(args));
-  if (await commandExists(process.platform === "win32" ? "pnpm.cmd" : "pnpm")) {
-    return runCommand(process.platform === "win32" ? "pnpm.cmd" : "pnpm", packageArgs, options);
+  if (await commandExists("pnpm")) {
+    return runCommand(platformExecutable("pnpm"), packageArgs, options);
   }
 
   if (!options.quiet) {
     console.warn("pnpm was not found. Falling back to npm for this command.");
     console.warn("For the intended Tsundere package workflow, install pnpm with: npm install -g pnpm");
   }
-  return runCommand(process.platform === "win32" ? "npm.cmd" : "npm", npmFallbackArgs(packageArgs), options);
-}
-
-async function commandExists(command: string): Promise<boolean> {
-  const checker = process.platform === "win32" ? "where.exe" : "sh";
-  const args = process.platform === "win32" ? [command] : ["-c", `command -v ${command}`];
-  return (await runCommand(checker, args, { quiet: true })) === 0;
+  return runCommand(platformExecutable("npm"), npmFallbackArgs(packageArgs), options);
 }
 
 function npmFallbackArgs(args: string[]): string[] {
@@ -415,30 +436,9 @@ function npmFallbackArgs(args: string[]): string[] {
   }
 }
 
-async function runCommand(command: string, args: string[], options: { quiet?: boolean } = {}): Promise<number> {
-  return new Promise((resolveCode) => {
-    const executable = process.platform === "win32" && command.endsWith(".cmd") ? "cmd.exe" : command;
-    const commandArgs = process.platform === "win32" && command.endsWith(".cmd")
-      ? ["/d", "/s", "/c", command, ...args]
-      : args;
-    const child = spawn(executable, commandArgs, {
-      cwd: process.cwd(),
-      stdio: options.quiet ? "ignore" : "inherit",
-      shell: false
-    });
-    child.on("error", () => resolveCode(1));
-    child.on("close", (code) => resolveCode(code ?? 1));
-  });
-}
-
 async function openFile(path: string): Promise<number> {
-  if (process.platform === "win32") {
-    return runCommand("cmd.exe", ["/c", "start", "", path]);
-  }
-  if (process.platform === "darwin") {
-    return runCommand("open", [path]);
-  }
-  return runCommand("xdg-open", [path]);
+  const command = openFileCommand(path);
+  return runCommand(command.command, command.args);
 }
 
 function mapBundledPackages(args: string[]): string[] {

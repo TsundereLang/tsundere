@@ -65,6 +65,46 @@ Open the local docs:
 tsundere docs
 ```
 
+## Linux Setup
+
+Tsundere supports Linux, macOS, and Windows. On Linux, install Node.js 18 or newer and npm first:
+
+```bash
+node --version
+npm --version
+```
+
+From a source checkout:
+
+```bash
+npm install
+npm run build
+npm run linux:install
+```
+
+After installing, run:
+
+```bash
+tsundere doctor
+```
+
+Linux storage paths:
+
+```text
+~/.tsundere/
+~/.tsundere/config.json
+~/.tsundere/cache/
+~/.tsundere/store/
+~/.tsundere/logs/
+```
+
+`tsundere doctor` verifies Node.js, npm, package optimizer storage, and Linux executable permissions for bundled scripts. If Linux reports `permission denied`, run:
+
+```bash
+chmod +x scripts/install-linux.sh
+chmod +x dist/cli.js
+```
+
 ## Example
 
 ```yuri
