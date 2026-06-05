@@ -375,7 +375,9 @@ function lowerNativeEmbeds(source: string): string {
 }
 
 function lowerNativeObjectCalls(source: string): string {
-  return replaceCallBlocks(source, /((?:await\s+)?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+)\s*\{/gu, (callee, body) => {
+  return replaceBlocks(source, /^(\s*)((?:await\s+)?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+)\s*\{/gmu, (match, body) => {
+    const indent = match[1] ?? "";
+    const callee = (match[2] ?? "").trim();
     const properties = body
       .split(/\r?\n/u)
       .map((line) => line.trim())
@@ -390,7 +392,7 @@ function lowerNativeObjectCalls(source: string): string {
         return `${name}: ${value.trim()},`;
       })
       .join("\n  ");
-    return `${callee}({\n  ${properties}\n})`;
+    return `${indent}${callee}({\n  ${properties}\n${indent}})`;
   });
 }
 
