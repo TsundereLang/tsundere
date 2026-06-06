@@ -11,6 +11,7 @@ Use them when you want to copy a pattern into a real project:
 - `collectors.yuri` shows collector utilities.
 - `typed-router.yuri` shows interaction routing patterns.
 - `logging.yuri` shows structured logger usage with request metadata.
+- `metrics.yuri` shows Prometheus-style counters and histograms.
 - `slash-options.yuri` shows slash command option definitions.
 - `rest-commands.yuri` shows REST helper usage.
 - `sharding-and-gateway.yuri` shows gateway and sharding concepts.

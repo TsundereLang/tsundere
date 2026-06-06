@@ -1,0 +1,31 @@
+import { createDefaultMetrics } from "@tsundere/metrics"
+
+const metrics = createDefaultMetrics()
+const commandCount = metrics.get("tsundere_commands_total")
+const commandDuration = metrics.get("tsundere_command_duration_seconds")
+
+client.on("interactionCreate", async (interaction) => {
+  if interaction.isCommand("ping") {
+    const stop = commandDuration.time({ command: "ping" })
+
+    try {
+      await interaction.reply({
+        content: "pong",
+        ephemeral: true
+      })
+      commandCount.inc(1, { command: "ping", status: "ok" })
+    }
+    catch err {
+      commandCount.inc(1, { command: "ping", status: "error" })
+      throw err
+    }
+    finally {
+      stop()
+    }
+  }
+})
+
+server.get("/metrics", (req, res) => {
+  res.setHeader("content-type", "text/plain; version=0.0.4")
+  res.send(metrics.toPrometheus())
+})

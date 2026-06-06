@@ -114,6 +114,15 @@ tsundere_command_duration_ms_bucket{command="ping",le="100"} 24
 # HELP tsundere_discord_rest_requests_total Discord REST requests.
 # TYPE tsundere_discord_rest_requests_total counter
 tsundere_discord_rest_requests_total{method="PUT",route="/commands",status="200"} 1</code></pre>
+        <p class="mt-4 text-slate-600">Use `@tsundere/metrics` to create counters, gauges, histograms, collect runtime memory and uptime, and export Prometheus text from a `/metrics` endpoint.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { createDefaultMetrics } from "@tsundere/metrics"
+
+const metrics = createDefaultMetrics()
+
+server.get("/metrics", (req, res) => {
+  res.setHeader("content-type", "text/plain; version=0.0.4")
+  res.send(metrics.toPrometheus())
+})</code></pre>
       </section>
 
       <section class="mt-10">
@@ -141,7 +150,7 @@ tsundere_discord_rest_requests_total{method="PUT",route="/commands",status="200"
 
       <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
         <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
-        <p class="mt-2 text-pink-900"><a href="deployment.html">Deployment</a> · <a href="security.html">Security</a> · <a href="cli.html">CLI and Runtime</a> · <a href="discord-intelligence.html">Discord Intelligence</a></p>
+        <p class="mt-2 text-pink-900"><a href="deployment.html">Deployment</a> - <a href="security.html">Security</a> - <a href="cli.html">CLI and Runtime</a> - <a href="discord-intelligence.html">Discord Intelligence</a></p>
       </section>
     </main>
   </div>
