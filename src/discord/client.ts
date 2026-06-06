@@ -10,7 +10,7 @@ import {
   type User as DiscordUser,
   type VoiceState as DiscordVoiceState
 } from "discord.js";
-import type { Channel, DiscordEvents, EventName, Guild, Partials, PresenceData, Snowflake, User } from "./types.js";
+import type { Channel, DiscordEvents, EventName, Guild, Member, MemberRoles, Partials, PresenceData, Snowflake, User } from "./types.js";
 import { REST } from "./rest.js";
 import { CacheManager } from "./cache.js";
 
@@ -211,6 +211,10 @@ export class MemberManager {
     return member;
   }
 
+  set(member: RuntimeMember): void {
+    this.memberCache.set(member.id, member);
+  }
+
   async ban(user: User | Snowflake, _options?: { reason?: string }): Promise<void> {
     const id = typeof user === "string" ? user : user.id;
     this.memberCache.delete(id);
@@ -251,6 +255,14 @@ export class RuntimeMemberRoles {
 
   async add(roleId: Snowflake): Promise<void> {
     this.cache.add(roleId);
+  }
+
+  async remove(roleId: Snowflake): Promise<void> {
+    this.cache.delete(roleId);
+  }
+
+  includes(roleId: Snowflake): boolean {
+    return this.cache.has(roleId);
   }
 }
 
@@ -341,12 +353,34 @@ function mapChannel(channel: NonNullable<DiscordMessage["channel"]>): Channel {
   };
 }
 
-function mapMember(member: DiscordGuildMember): import("./types.js").Member {
+function mapMember(member: DiscordGuildMember): Member {
   return {
     id: member.id,
     user: mapUser(member.user),
     guildId: member.guild.id,
-    roles: [...member.roles.cache.keys()]
+    roles: mapMemberRoles(member)
+  };
+}
+
+function mapMemberRoles(member: DiscordGuildMember): MemberRoles {
+  return {
+    cache: {
+      has(roleId: Snowflake) {
+        return member.roles.cache.has(roleId);
+      },
+      keys() {
+        return member.roles.cache.keys();
+      }
+    },
+    includes(roleId: Snowflake) {
+      return member.roles.cache.has(roleId);
+    },
+    async add(roleId: Snowflake) {
+      await member.roles.add(roleId);
+    },
+    async remove(roleId: Snowflake) {
+      await member.roles.remove(roleId);
+    }
   };
 }
 
@@ -371,12 +405,18 @@ function mapVoiceState(state: DiscordVoiceState): import("./types.js").VoiceStat
 function createInteraction(interaction: DiscordInteraction): import("./types.js").Interaction {
   const commandName = "commandName" in interaction && typeof interaction.commandName === "string" ? interaction.commandName : undefined;
   const customId = "customId" in interaction && typeof interaction.customId === "string" ? interaction.customId : undefined;
+  const guild = interaction.guild ? createInteractionGuild(interaction.guild) : undefined;
+  const member = interaction.member instanceof Object && "roles" in interaction.member && "guild" in interaction.member
+    ? mapMember(interaction.member as DiscordGuildMember)
+    : undefined;
   return {
     id: interaction.id,
     token: interaction.token,
     ...(interaction.guildId ? { guildId: interaction.guildId } : {}),
     ...(interaction.channelId ? { channelId: interaction.channelId } : {}),
     ...(interaction.user ? { user: mapUser(interaction.user) } : {}),
+    ...(member ? { member } : {}),
+    ...(guild ? { guild } : {}),
     ...(commandName !== undefined ? { commandName } : {}),
     ...(customId !== undefined ? { customId } : {}),
     options: readInteractionOptions(interaction),
@@ -421,6 +461,17 @@ function createInteraction(interaction: DiscordInteraction): import("./types.js"
     async deleteReply() {
       if (isCallable(interaction, "deleteReply")) {
         await interaction.deleteReply();
+      }
+    }
+  };
+}
+
+function createInteractionGuild(guild: DiscordGuild): NonNullable<import("./types.js").Interaction["guild"]> {
+  return {
+    id: guild.id,
+    members: {
+      async fetch(id: Snowflake): Promise<Member> {
+        return mapMember(await guild.members.fetch(id));
       }
     }
   };
