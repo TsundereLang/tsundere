@@ -311,6 +311,13 @@ export class RuntimeMemberRoles {
     }
     this.cache.add(roleId);
   }
+
+  async remove(roleId: Snowflake): Promise<void> {
+    if (this.native) {
+      await this.native.roles.remove(roleId);
+    }
+    this.cache.delete(roleId);
+  }
 }
 
 export interface ShardHandle {

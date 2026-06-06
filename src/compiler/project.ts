@@ -352,7 +352,7 @@ function rewriteRuntimeBranding(output: string): string {
 }
 
 function runtimeVersion(): string {
-  const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+  const packagePath = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "package.json");
   if (!existsSync(packagePath)) {
     return "0.0.0";
   }

@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
 const { pathToFileURL } = require("node:url");
+const { createTelemetry } = require("./telemetry.cjs");
 
 const version = app.getVersion();
 const channel = process.env.TSUNDERE_RELEASE_CHANNEL || "stable";
@@ -29,7 +30,8 @@ function createWindow() {
     backgroundColor: "#151018",
     title: "Tsundere Setup",
     autoHideMenuBar: true,
-    titleBarStyle: "hidden",
+    frame: false,
+    icon: resourcePath("assets", "tsundere-installer-logo.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -58,7 +60,17 @@ ipcMain.handle("installer:meta", () => ({
   version,
   channel,
   defaultInstallPath: path.join(os.homedir(), "AppData", "Local", "Tsundere"),
-  logoPath: pathToFileURL(resourcePath("assets", "tsundere-logo.png")).toString()
+  logoPath: pathToFileURL(resourcePath("assets", "tsundere-installer-logo.png")).toString(),
+  packageCatalog: [
+    { id: "cli", name: "Tsundere CLI", kind: "Core", description: "Build, run, update, and manage .yuri projects." },
+    { id: "discord", name: "@tsundere/discord", kind: "Runtime", description: "Bundled Discord wrapper and runtime library." },
+    { id: "yurils", name: "YuriLS", kind: "Editor", description: "Language server metadata, diagnostics, and IntelliSense support." },
+    { id: "vscode", name: "VS Code Extension", kind: "Editor", description: "Syntax highlighting, commands, snippets, and Discord completions." },
+    { id: "docs", name: "Documentation Pack", kind: "Docs", description: "Local guides, templates, examples, and migration notes." },
+    { id: "examples", name: "Example Projects", kind: "Templates", description: "Starter Discord bot and backend templates." },
+    { id: "powershell", name: "PowerShell Installer", kind: "Fallback", description: "Script installer for users who do not want the EXE." },
+    { id: "linux", name: "Linux Installer", kind: "Fallback", description: "Shell installer included in release bundles." }
+  ]
 }));
 
 ipcMain.handle("installer:detect", async () => ({
@@ -74,6 +86,8 @@ ipcMain.handle("installer:install", async (_event, options) => {
   const installRoot = options.installPath || path.join(os.homedir(), "AppData", "Local", "Tsundere");
   const configRoot = path.join(os.homedir(), "AppData", "Roaming", "Tsundere");
   const binRoot = path.join(installRoot, "bin");
+  const telemetry = createTelemetry(configRoot, { ...options, version, channel });
+  await telemetry.capture("install_started", { components: options.components, packages: options.packages });
   fs.mkdirSync(installRoot, { recursive: true });
   fs.mkdirSync(configRoot, { recursive: true });
   fs.mkdirSync(binRoot, { recursive: true });
@@ -120,6 +134,7 @@ ipcMain.handle("installer:install", async (_event, options) => {
     ], { optional: true });
   }
 
+  await telemetry.capture("install_completed", { installRoot });
   return { ok: true, logs };
 });
 
@@ -130,6 +145,26 @@ ipcMain.handle("installer:open", (_event, target) => {
     discord: "https://discord.gg/Gpxj5xVXBZ"
   };
   return shell.openExternal(targets[target] || target);
+});
+
+ipcMain.handle("window:minimize", (event) => {
+  BrowserWindow.fromWebContents(event.sender)?.minimize();
+});
+
+ipcMain.handle("window:toggleMaximize", (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (!window) {
+    return;
+  }
+  if (window.isMaximized()) {
+    window.unmaximize();
+  } else {
+    window.maximize();
+  }
+});
+
+ipcMain.handle("window:close", (event) => {
+  BrowserWindow.fromWebContents(event.sender)?.close();
 });
 
 function commandStatus(command, args) {
@@ -203,6 +238,13 @@ function writeInstallerConfig(configRoot, installRoot, options) {
     installRoot,
     updateMode: options.updateMode,
     telemetryMode: options.telemetryMode,
+    telemetry: {
+      provider: options.telemetryProvider || "disabled",
+      endpoint: options.telemetryEndpoint || "",
+      crashReports: options.telemetryMode === "crash" || options.telemetryMode === "usage",
+      usageStats: options.telemetryMode === "usage"
+    },
+    packages: options.packages || [],
     installedAt: new Date().toISOString()
   };
   fs.writeFileSync(path.join(configRoot, "installer.json"), JSON.stringify(config, null, 2));

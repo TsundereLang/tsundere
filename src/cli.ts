@@ -11,7 +11,7 @@ import { cleanDiscordTypes, doctorDiscordTypes, inspectDiscordType, syncDiscordT
 import { writeCommandManifest } from "./commands/discovery.js";
 import { cleanStore, optimizedNpmInstall, optimizerDoctor, pruneStore, readStorePath } from "./package-optimizer.js";
 import { commandExists, currentPlatform, ensureExecutable, ensureTsunderePaths, openFileCommand, platformExecutable, platformLabel, runCommand, runtimeChecks, tsunderePaths } from "./platform/index.js";
-import { compareVersions, configureDailyUpdateCheck, latestRelease, selfUpdate } from "./updater.js";
+import { compareVersions, configureDailyUpdateCheck, latestRelease, securityUpdateNotice, selfUpdate } from "./updater.js";
 
 const [, , command = "help", ...args] = process.argv;
 const cliRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,6 +26,7 @@ try {
 }
 
 async function run(command: string, args: string[]): Promise<number> {
+  await maybeWarnSecurityUpdate(command);
   switch (command) {
     case "create":
       return createProject(args);
@@ -77,6 +78,16 @@ async function run(command: string, args: string[]): Promise<number> {
     default:
       printHelp();
       return 0;
+  }
+}
+
+async function maybeWarnSecurityUpdate(command: string): Promise<void> {
+  if (!["dev", "start", "build", "install", "add", "update"].includes(command) || process.env.TSUNDERE_NO_UPDATE_NOTICE === "1") {
+    return;
+  }
+  const message = await securityUpdateNotice(packageVersion(), updateRepo()).catch(() => undefined);
+  if (message) {
+    console.warn(message);
   }
 }
 

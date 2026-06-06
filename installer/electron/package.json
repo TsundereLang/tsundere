@@ -30,7 +30,7 @@
     ],
     "extraResources": [
       {
-        "from": "../../assets",
+        "from": "assets",
         "to": "assets"
       },
       {
@@ -56,7 +56,7 @@
         "nsis",
         "portable"
       ],
-      "icon": "../../assets/vscode-tsundere-logo.png",
+      "icon": "assets/tsundere-installer-logo.png",
       "artifactName": "Tsundere-Setup-${version}-${arch}.${ext}",
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": false

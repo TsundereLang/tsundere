@@ -10,13 +10,17 @@ const state = {
     docs: true,
     examples: true
   },
+  packages: [],
   editorMode: "both",
   updateMode: "notify",
-  telemetryMode: "crash"
+  telemetryMode: "crash",
+  telemetryProvider: "disabled",
+  telemetryEndpoint: ""
 };
 
 const pages = [
   welcomePage,
+  packagesPage,
   componentsPage,
   editorsPage,
   preferencesPage,
@@ -37,9 +41,14 @@ init();
 async function init() {
   state.meta = await window.tsundereInstaller.meta();
   state.installPath = state.meta.defaultInstallPath;
+  state.packages = (state.meta.packageCatalog || []).map((item) => item.id);
   document.getElementById("version").textContent = `Version ${state.meta.version}`;
   document.getElementById("channel").textContent = `${state.meta.channel} channel`;
   document.getElementById("logo").src = state.meta.logoPath;
+  document.getElementById("titleLogo").src = state.meta.logoPath;
+  document.getElementById("minimizeWindow").addEventListener("click", () => window.tsundereInstaller.minimize());
+  document.getElementById("maximizeWindow").addEventListener("click", () => window.tsundereInstaller.toggleMaximize());
+  document.getElementById("closeWindow").addEventListener("click", () => window.tsundereInstaller.close());
   render();
   window.tsundereInstaller.detect().then((result) => {
     state.detection = result;
@@ -68,12 +77,12 @@ next.addEventListener("click", async () => {
 
 function render() {
   const page = pages[state.page];
-  stepLabel.textContent = `Step ${Math.min(state.page + 1, 6)} of 6`;
+  stepLabel.textContent = `Step ${Math.min(state.page + 1, pages.length - 1)} of ${pages.length - 1}`;
   title.textContent = page.title;
   subtitle.textContent = page.subtitle;
   content.innerHTML = "";
   page.render();
-  back.style.visibility = state.page === 0 || state.page === 5 ? "hidden" : "visible";
+  back.style.visibility = state.page === 0 || page.disabled ? "hidden" : "visible";
   next.textContent = page.button || "Next";
   next.disabled = Boolean(page.disabled);
 }
@@ -118,20 +127,58 @@ function statusItem(name, value) {
 }
 
 function welcomePage() {}
-welcomePage.title = "Welcome to the Tsundere Setup Wizard";
-welcomePage.subtitle = "Install the Tsundere language, tooling, and developer ecosystem in just a few minutes.";
+welcomePage.title = "Install Tsundere";
+welcomePage.subtitle = "A focused setup dashboard for the .yuri toolchain, Discord runtime, editor support, and updater.";
 welcomePage.button = "Install";
 welcomePage.render = () => {
   content.innerHTML = `
-    <div class="stack">
-      <p>Tsundere installs the CLI, local runtime, YuriLS language server support, editor integration, documentation, and future updater preferences.</p>
-      <div class="grid">
-        <div class="status"><strong>Release</strong><span>${state.meta.version}</span></div>
-        <div class="status"><strong>Channel</strong><span>${state.meta.channel}</span></div>
+    <div class="dashboard">
+      <div class="hero-panel">
+        <h3>Ready in minutes</h3>
+        <p>Install the CLI, Discord runtime, language tooling, docs, and editor support from one clean app.</p>
+        <div class="meta">
+          <span>${state.meta.version}</span>
+          <span>${state.meta.channel}</span>
+        </div>
       </div>
-      <p class="pill">Designed for .yuri Discord bot projects with Node.js compatibility underneath.</p>
+      <div class="stack">
+        <div class="status"><strong>Runtime</strong><span>Node-compatible</span></div>
+        <div class="status"><strong>Language</strong><span>.yuri projects</span></div>
+        <div class="status"><strong>Installer</strong><span>Electron EXE</span></div>
+      </div>
     </div>
   `;
+};
+
+function packagesPage() {}
+packagesPage.title = "Package Dashboard";
+packagesPage.subtitle = "Choose the Tsundere packages and installer assets you want available after setup.";
+packagesPage.render = () => {
+  const catalog = state.meta.packageCatalog || [];
+  content.innerHTML = `
+    <div class="package-list">
+      ${catalog.map((pkg) => `
+        <label class="package-row">
+          <input type="checkbox" data-package="${pkg.id}" ${state.packages.includes(pkg.id) ? "checked" : ""}>
+          <span>
+            <strong>${pkg.name}</strong>
+            <span>${pkg.description}</span>
+          </span>
+          <span class="package-kind">${pkg.kind}</span>
+        </label>
+      `).join("")}
+    </div>
+  `;
+  content.querySelectorAll("[data-package]").forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.checked && !state.packages.includes(input.dataset.package)) {
+        state.packages.push(input.dataset.package);
+      }
+      if (!input.checked) {
+        state.packages = state.packages.filter((item) => item !== input.dataset.package);
+      }
+    });
+  });
 };
 
 function componentsPage() {}
@@ -192,6 +239,14 @@ preferencesPage.render = () => {
         ${radio("telemetry", "off", "Disable Telemetry", "Do not send usage or crash information.", state.telemetryMode === "off")}
       </div>
     </div>
+    <div class="stack" style="margin-top:16px">
+      <h3>Telemetry Connector</h3>
+      <div class="grid">
+        ${radio("telemetryProvider", "disabled", "No Server Yet", "Store the preference locally until Tsundere has a telemetry endpoint.", state.telemetryProvider === "disabled")}
+        ${radio("telemetryProvider", "https", "HTTPS Endpoint", "Use a future hosted collector URL.", state.telemetryProvider === "https")}
+      </div>
+      <input class="path" id="telemetryEndpoint" placeholder="https://telemetry.tsundere.dev/events" value="${state.telemetryEndpoint}">
+    </div>
   `;
   content.querySelectorAll("input[name='update']").forEach((input) => {
     input.addEventListener("change", () => {
@@ -202,6 +257,14 @@ preferencesPage.render = () => {
     input.addEventListener("change", () => {
       state.telemetryMode = input.value;
     });
+  });
+  content.querySelectorAll("input[name='telemetryProvider']").forEach((input) => {
+    input.addEventListener("change", () => {
+      state.telemetryProvider = input.value;
+    });
+  });
+  document.getElementById("telemetryEndpoint").addEventListener("input", (event) => {
+    state.telemetryEndpoint = event.target.value;
   });
 };
 
@@ -247,7 +310,10 @@ installPage.render = async () => {
       components: state.components,
       editorMode: state.editorMode,
       updateMode: state.updateMode,
-      telemetryMode: state.telemetryMode
+      telemetryMode: state.telemetryMode,
+      telemetryProvider: state.telemetryProvider,
+      telemetryEndpoint: state.telemetryEndpoint,
+      packages: state.packages
     });
     document.getElementById("installStatus").textContent = "Installation complete.";
     document.getElementById("installLog").textContent = result.logs.join("\n\n");
