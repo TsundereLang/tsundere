@@ -9,6 +9,26 @@
   "linkMode": "auto",
   "strictDependencies": false,
   "themeLogs": true,
+  "runtime": {
+    "target": "node",
+    "scale": "auto",
+    "workers": "auto",
+    "shards": "auto",
+    "simulateShards": 1,
+    "cache": {
+      "backend": "memory"
+    },
+    "metrics": {
+      "enabled": true,
+      "port": 9100,
+      "path": "/metrics",
+      "format": "prometheus"
+    },
+    "tracing": {
+      "enabled": false,
+      "provider": "opentelemetry"
+    }
+  },
   "diagnostics": {
     "warnings": true,
     "verbose": false,

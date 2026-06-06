@@ -12,6 +12,7 @@ import { writeCommandManifest } from "./commands/discovery.js";
 import { cleanStore, optimizedNpmInstall, optimizerDoctor, pruneStore, readStorePath } from "./package-optimizer.js";
 import { commandExists, currentPlatform, ensureExecutable, ensureTsunderePaths, openFileCommand, platformExecutable, platformLabel, runCommand, runtimeChecks, tsunderePaths } from "./platform/index.js";
 import { compareVersions, configureDailyUpdateCheck, latestRelease, securityUpdateNotice, selfUpdate } from "./updater.js";
+import { createDistributedRuntime, createRuntimePlan, exportGrafanaDashboard, prometheusMetrics, serveMetrics } from "./distributed/index.js";
 
 const [, , command = "help", ...args] = process.argv;
 const cliRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -70,6 +71,12 @@ async function run(command: string, args: string[]): Promise<number> {
       return types(args);
     case "runtime":
       return runtime(args);
+    case "metrics":
+      return metrics(args);
+    case "inspect":
+      return inspect();
+    case "reload":
+      return reload();
     case "commands":
       return commands(args);
     case "fingerprint":
@@ -128,6 +135,65 @@ async function runtime(args: string[]): Promise<number> {
   }
   await ensureProjectDiscordRuntime(true);
   console.log("Installed bundled @tsundere/discord runtime at .tsundere/runtime/discord");
+  return 0;
+}
+
+async function metrics(args: string[]): Promise<number> {
+  const action = args[0] ?? "doctor";
+  const config = await loadConfig();
+  const runtime = createDistributedRuntime(config);
+  if (action === "serve") {
+    runtime.plan.metrics.enabled = true;
+    runtime.plan.metrics.port = Number(readFlag(args, "--port") ?? runtime.plan.metrics.port);
+    runtime.plan.metrics.path = readFlag(args, "--path") ?? runtime.plan.metrics.path;
+    const { url } = await serveMetrics(runtime);
+    console.log(`Tsundere metrics serving at ${url}`);
+    await new Promise<void>(() => undefined);
+    return 0;
+  }
+  if (action === "export-grafana") {
+    const output = args.find((arg) => !arg.startsWith("-") && arg !== "export-grafana") ?? "tsundere-grafana-dashboard.json";
+    const path = await exportGrafanaDashboard(output);
+    console.log(`Exported Tsundere Grafana dashboard to ${path}`);
+    return 0;
+  }
+  if (action === "doctor") {
+    const plan = runtime.plan;
+    console.log("Tsundere Metrics Doctor");
+    console.log(`  enabled: ${plan.metrics.enabled ? "yes" : "no"}`);
+    console.log(`  endpoint: http://127.0.0.1:${plan.metrics.port}${plan.metrics.path}`);
+    console.log(`  format: ${plan.metrics.format}`);
+    console.log(`  prometheus sample:`);
+    console.log(prometheusMetrics(runtime.metrics()).split("\n").slice(0, 6).map((line) => `    ${line}`).join("\n"));
+    console.log(`  grafana export: tsundere metrics export-grafana ./grafana/tsundere-dashboard.json`);
+    console.log(`  tracing: ${plan.tracing.enabled ? plan.tracing.provider : "off"}`);
+    return 0;
+  }
+  throw new Error("Usage: tsundere metrics [serve|export-grafana|doctor] [--port 9100] [--path /metrics]");
+}
+
+async function inspect(): Promise<number> {
+  const config = await loadConfig();
+  const report = createDistributedRuntime(config).inspect();
+  console.log("Tsundere Runtime Inspector");
+  console.log(`  Workers: ${report.workers}`);
+  console.log(`  Shards: ${report.shards}`);
+  console.log(`  Guilds: ${report.guilds.toLocaleString()}`);
+  console.log(`  Users: ${report.users.toLocaleString()}`);
+  console.log(`  Memory: ${formatBytes(report.memoryUsedBytes)} / ${formatBytes(report.memoryTotalBytes)}`);
+  console.log(`  CPU: ${report.cpuCount} cores`);
+  console.log(`  Uptime: ${formatDuration(report.uptimeSeconds)}`);
+  console.log(`  Cache: ${report.cacheBackend} (${report.cacheHits} hits, ${report.cacheMisses} misses)`);
+  console.log(`  Metrics: http://127.0.0.1:${report.metricsPort}${report.metricsPath}`);
+  return 0;
+}
+
+async function reload(): Promise<number> {
+  const config = await loadConfig();
+  const plan = createRuntimePlan(config);
+  console.log("Tsundere reload requested.");
+  console.log(`Would replace ${plan.workers} worker${plan.workers === 1 ? "" : "s"} across ${plan.shards} shard${plan.shards === 1 ? "" : "s"} with graceful shutdown.`);
+  console.log("Zero-downtime worker handoff is staged in the distributed runtime foundation.");
   return 0;
 }
 
@@ -574,6 +640,11 @@ Usage:
   tsundere update [package]
   tsundere updater [check|self|info] [--yes] [--force] [--dry-run]
   tsundere updater cron [install|remove|status] [--time HH:mm]
+  tsundere metrics serve
+  tsundere metrics export-grafana ./grafana/tsundere-dashboard.json
+  tsundere metrics doctor
+  tsundere inspect
+  tsundere reload
   tsundere version
   tsundere doctor
   tsundere format
@@ -602,6 +673,19 @@ function formatBytes(bytes: number): string {
     return `${(bytes / 1024).toFixed(1)} KB`;
   }
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function formatDuration(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds % 86400 / 3600);
+  const minutes = Math.floor(seconds % 3600 / 60);
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
 }
 
 function packageVersion(): string {

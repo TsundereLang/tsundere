@@ -38,6 +38,7 @@ Tsundere is not trying to be a giant prebuilt bot. It does not ship economy, tic
 - `tsundere dev` with build, run, watch, and restart
 - `tsundere build` plus `tsundere start`
 - npm-first package optimization with a reusable Tsundere store
+- Distributed runtime planning with local IPC, cache, metrics, and dashboard exports
 - `tsundere build --protect` for protected runtime builds
 - Build fingerprint metadata with `tsundere fingerprint inspect`
 - Local GitBook-style docs with search, light mode, and dark mode
@@ -157,6 +158,11 @@ tsundere version
 tsundere updater
 tsundere updater self --yes
 tsundere update discord.js
+tsundere inspect
+tsundere metrics doctor
+tsundere metrics export-grafana ./grafana/tsundere-dashboard.json
+tsundere metrics serve --port 9100 --path /metrics
+tsundere reload
 tsundere store path
 tsundere store prune
 tsundere cache clean
@@ -173,6 +179,49 @@ tsundere fingerprint inspect
 ```powershell
 tsundere update discord.js
 ```
+
+## Distributed Runtime
+
+Tsundere includes a distributed runtime foundation for larger bots and local scaling tests. It does not replace Node.js or Discord.js. It builds a runtime plan from config and environment, gives Tsundere apps local IPC, global events, a shared cache API, singleton task helpers, Prometheus metrics, Grafana dashboard export, and inspect/reload commands.
+
+Example `tsundere.config.json`:
+
+```json
+{
+  "runtime": {
+    "target": "node",
+    "scale": "auto",
+    "workers": "auto",
+    "shards": "auto",
+    "simulateShards": 1,
+    "cache": {
+      "backend": "memory"
+    },
+    "metrics": {
+      "enabled": true,
+      "port": 9100,
+      "path": "/metrics",
+      "format": "prometheus"
+    },
+    "tracing": {
+      "enabled": false,
+      "provider": "opentelemetry"
+    }
+  }
+}
+```
+
+Runtime commands:
+
+```powershell
+tsundere inspect
+tsundere metrics doctor
+tsundere metrics export-grafana ./grafana/tsundere-dashboard.json
+tsundere metrics serve --port 9100 --path /metrics
+tsundere reload
+```
+
+For local stress testing, set `simulateShards` or `TSUNDERE_GUILD_COUNT`, `TSUNDERE_USER_COUNT`, and `TSUNDERE_GATEWAY_LATENCY_MS` before running `tsundere inspect`. `runtime.redis` is accepted in config so projects can keep Redis connection settings in one place while the current built-in cache backend stays local-memory first.
 
 ## Package Optimizer
 

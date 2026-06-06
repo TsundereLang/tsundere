@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { TsundereConfig } from "./types.js";
+import type { RuntimeConfig, TsundereConfig } from "./types.js";
 
 const defaults: TsundereConfig = {
   name: "tsundere-app",
@@ -75,9 +75,30 @@ function mergeConfig(base: TsundereConfig, override: Partial<TsundereConfig>): T
   if (base.diagnostics || override.diagnostics) {
     merged.diagnostics = { ...base.diagnostics, ...override.diagnostics };
   }
+  if (typeof base.runtime === "object" || typeof override.runtime === "object") {
+    const baseRuntime = runtimeConfigFrom(base.runtime);
+    const overrideRuntime = runtimeConfigFrom(override.runtime);
+    merged.runtime = {
+      ...baseRuntime,
+      ...overrideRuntime,
+      metrics: { ...baseRuntime?.metrics, ...overrideRuntime.metrics },
+      tracing: { ...baseRuntime?.tracing, ...overrideRuntime.tracing },
+      cache: { ...baseRuntime?.cache, ...overrideRuntime.cache }
+    };
+  }
   const plugins = override.plugins ?? base.plugins;
   if (plugins !== undefined) {
     merged.plugins = plugins;
   }
   return merged;
+}
+
+function runtimeConfigFrom(runtime: TsundereConfig["runtime"] | undefined): RuntimeConfig {
+  if (!runtime) {
+    return {};
+  }
+  if (typeof runtime === "string") {
+    return { target: runtime };
+  }
+  return runtime;
 }

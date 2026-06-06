@@ -1,5 +1,9 @@
 export type TsundereTarget = "javascript" | "typescript";
 export type ProtectProfile = "standard" | "advanced" | "maximum";
+export type RuntimeKind = "node" | "bun" | "deno" | "cloudflare" | "vercel" | "netlify" | "aws-lambda" | "azure-functions";
+export type RuntimeScaleMode = "off" | "auto" | "manual";
+export type RuntimeMetricFormat = "prometheus" | "json";
+export type RuntimeCacheBackend = "memory" | "redis" | "valkey" | "custom";
 
 export interface TsundereConfig {
   name: string;
@@ -12,7 +16,7 @@ export interface TsundereConfig {
   linkMode?: "auto" | "hardlink" | "copy";
   strictDependencies?: boolean;
   themeLogs?: boolean;
-  runtime?: "node" | "bun" | "deno" | "cloudflare" | "vercel" | "netlify" | "aws-lambda" | "azure-functions";
+  runtime?: RuntimeKind | RuntimeConfig;
   plugins?: string[];
   enterprise?: {
     monorepo?: boolean;
@@ -26,6 +30,29 @@ export interface TsundereConfig {
   };
   commands?: CommandDiscoveryConfig;
   diagnostics?: DiagnosticConfig;
+}
+
+export interface RuntimeConfig {
+  target?: RuntimeKind;
+  scale?: RuntimeScaleMode | "auto";
+  workers?: number | "auto";
+  shards?: number | "auto";
+  simulateShards?: number;
+  redis?: string;
+  cache?: {
+    backend?: RuntimeCacheBackend;
+    namespace?: string;
+  };
+  metrics?: {
+    enabled?: boolean;
+    port?: number;
+    path?: string;
+    format?: RuntimeMetricFormat;
+  };
+  tracing?: {
+    enabled?: boolean;
+    provider?: "opentelemetry" | "none" | string;
+  };
 }
 
 export interface DiagnosticConfig {
