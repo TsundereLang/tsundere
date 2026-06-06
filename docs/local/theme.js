@@ -434,14 +434,20 @@ function setupBookDocs() {
           score: terms.reduce((score, term) => {
             const title = page.title.toLowerCase();
             const group = page.group.toLowerCase();
-            return score + (title.includes(term) ? 10 : 0) + (group.includes(term) ? 4 : 0);
+            const summary = (page.summary ?? "").toLowerCase();
+            const body = (page.body ?? "").toLowerCase();
+            return score
+              + (title.includes(term) ? 10 : 0)
+              + (group.includes(term) ? 4 : 0)
+              + (summary.includes(term) ? 3 : 0)
+              + (body.includes(term) ? 1 : 0);
           }, 0)
         }))
         .filter((match) => match.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
       results.innerHTML = matches
-        .map(({ page }) => `<a href="${page.slug}.html"><strong>${page.title}</strong><span>${page.group}</span></a>`)
+        .map(({ page }) => `<a href="${page.slug}.html"><strong>${page.title}</strong><span>${page.group} - ${snippet(page.summary ?? page.body ?? "", terms)}</span></a>`)
         .join("");
       results.classList.toggle("open", matches.length > 0);
     });

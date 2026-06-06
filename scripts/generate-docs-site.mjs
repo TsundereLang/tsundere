@@ -8,6 +8,128 @@ const author = {
   avatar: "https://cdn.discordapp.com/avatars/1212798448525512785/3939e4e22234f3e7ce8247988ad43d3d.webp?size=1536"
 };
 
+const cliDetails = {
+  create: {
+    syntax: "tsundere create <name> [--template <template>]",
+    purpose: "Scaffold a new Tsundere project with a starter layout, local runtime configuration, package metadata, and example .yuri files.",
+    workflow: "Choose a template, create the project, install dependencies, then run `tsundere dev` from the new folder.",
+    flags: ["--template discord", "--template empty", "--template cli", "--template rest", "--template websocket"],
+    example: "tsundere create my-bot --template discord\ncd my-bot\ntsundere install\ntsundere dev",
+    troubleshoot: "If creation succeeds but dependencies fail, run `tsundere install` again from the generated project root."
+  },
+  dev: {
+    syntax: "tsundere dev",
+    purpose: "Compile, run, watch, and restart a .yuri project during local development.",
+    workflow: "Start it from the project root after `.env` and `tsundere.config.json` are ready. It watches source files and restarts the runtime build when they change.",
+    flags: ["--no-sync", "--warnings=false", "--verbose"],
+    example: "tsundere dev\n# edit src/main.yuri\n# the runtime rebuilds and restarts",
+    troubleshoot: "If the process does not restart, confirm the source directory in `tsundere.config.json` points at the folder you are editing."
+  },
+  build: {
+    syntax: "tsundere build [--protect <profile>]",
+    purpose: "Compile .yuri source into runnable JavaScript or TypeScript output and prepare runtime artifacts.",
+    workflow: "Run before deployment, CI checks, or `tsundere start`. Treat diagnostics as build feedback, not runtime noise.",
+    flags: ["--protect standard", "--protect advanced", "--source-maps=false"],
+    example: "tsundere build\nls build\nls .tsundere/runtime-build",
+    troubleshoot: "If imports fail after build, run `tsundere runtime install` and `tsundere install` so the local @tsundere/discord package exists."
+  },
+  start: {
+    syntax: "tsundere start",
+    purpose: "Run the latest compiled runtime output through the Tsundere runtime entrypoint.",
+    workflow: "Use it after `tsundere build` in production or smoke tests so users do not manually call `node build/main.ts`.",
+    flags: ["--env <file>", "--check-updates=false"],
+    example: "tsundere build\ntsundere start",
+    troubleshoot: "If startup says the runtime build is missing, run `tsundere build` first."
+  },
+  install: {
+    syntax: "tsundere install",
+    purpose: "Install project dependencies with the Tsundere package optimizer while staying compatible with npm and pnpm packages.",
+    workflow: "Run after cloning, creating a project, or changing package metadata.",
+    flags: ["--copy", "--prefer-npm", "--frozen-lockfile"],
+    example: "tsundere install\n# installs dependencies and refreshes Tsundere lock/workspace metadata",
+    troubleshoot: "If package manager detection fails, install Node.js and npm first, then rerun the command from the project root."
+  },
+  add: {
+    syntax: "tsundere add <package...>",
+    purpose: "Add npm-compatible packages to a Tsundere project.",
+    workflow: "Use it for Discord libraries, database clients, web packages, or local packages exactly like a Node project.",
+    flags: ["--dev", "--exact"],
+    example: "tsundere add discord.js mysql2 drizzle-orm",
+    troubleshoot: "If a private package fails, verify the registry credentials in npm config before retrying."
+  },
+  remove: {
+    syntax: "tsundere remove <package...>",
+    purpose: "Remove packages from project metadata and refresh installed dependency state.",
+    workflow: "Use it when cleaning unused runtime packages before CI or releases.",
+    flags: ["--dev"],
+    example: "tsundere remove unused-package\ntsundere install",
+    troubleshoot: "If generated code still imports the package, search `src` before rebuilding."
+  },
+  update: {
+    syntax: "tsundere update <package...>",
+    purpose: "Update project packages. Self-updating the Tsundere toolchain uses `tsundere updater`, not this command.",
+    workflow: "Use it for dependency maintenance, then run build and tests.",
+    flags: ["--latest", "--interactive=false"],
+    example: "tsundere update discord.js @tsundere/discord\ntsundere build",
+    troubleshoot: "If a dependency breaks types, run `tsundere types sync` and inspect generated metadata."
+  },
+  doctor: {
+    syntax: "tsundere doctor",
+    purpose: "Inspect local setup, runtime package resolution, Discord metadata, package manager state, and common deployment issues.",
+    workflow: "Run it after install failures, runtime crashes, or editor support problems.",
+    flags: ["--fix", "--json"],
+    example: "tsundere doctor\n# read warnings from top to bottom",
+    troubleshoot: "If doctor cannot inspect a package, run `tsundere install` first."
+  },
+  metrics: {
+    syntax: "tsundere metrics",
+    purpose: "Inspect or expose Tsundere runtime and project metrics for observability workflows.",
+    workflow: "Pair it with @tsundere/metrics, Prometheus scraping, and production dashboards.",
+    flags: ["--prometheus", "--json", "--port <number>"],
+    example: "tsundere metrics --prometheus\n# scrape output from your monitoring stack",
+    troubleshoot: "If metrics are empty, confirm your app registers counters, gauges, or histograms at runtime."
+  }
+};
+
+const eventDetails = {
+  "Ready": { event: "ready", params: "()", intents: ["Guilds"], use: "Initialize services, sync commands, schedule background jobs, and announce startup once the gateway is ready." },
+  "Message Create": { event: "messageCreate", params: "(message)", intents: ["GuildMessages", "MessageContent when reading content"], use: "Handle prefix utilities, message logging, and lightweight message workflows." },
+  "Message Update": { event: "messageUpdate", params: "(oldMessage, newMessage)", intents: ["GuildMessages", "MessageContent when reading content"], use: "Audit edits and refresh message-derived cache entries." },
+  "Message Delete": { event: "messageDelete", params: "(message)", intents: ["GuildMessages", "Partials.Message for uncached deletes"], use: "Log deletions, clean command state, and handle cached or partial messages safely." },
+  "Interaction Create": { event: "interactionCreate", params: "(interaction)", intents: ["Guilds"], use: "Route slash commands, buttons, selects, modals, autocomplete, and context menus." },
+  "Guild Create": { event: "guildCreate", params: "(guild)", intents: ["Guilds"], use: "Prepare guild-specific configuration, cache, and command sync state." },
+  "Guild Delete": { event: "guildDelete", params: "(guild)", intents: ["Guilds"], use: "Disable guild jobs and clean stale cache for a removed server." },
+  "Member Add": { event: "guildMemberAdd", params: "(member)", intents: ["GuildMembers"], use: "Welcome users, apply autoroles, and run membership onboarding." },
+  "Member Remove": { event: "guildMemberRemove", params: "(member)", intents: ["GuildMembers"], use: "Log departures and clean member-scoped cache." },
+  "Member Update": { event: "guildMemberUpdate", params: "(oldMember, newMember)", intents: ["GuildMembers"], use: "Track nickname, role, timeout, and membership changes." },
+  "Role Create": { event: "roleCreate", params: "(role)", intents: ["Guilds"], use: "Track permission surface changes and update role caches." },
+  "Role Update": { event: "roleUpdate", params: "(oldRole, newRole)", intents: ["Guilds"], use: "Detect permission changes and hierarchy changes." },
+  "Role Delete": { event: "roleDelete", params: "(role)", intents: ["Guilds"], use: "Clean stale role references from configuration." },
+  "Channel Create": { event: "channelCreate", params: "(channel)", intents: ["Guilds"], use: "Track new channel structure and update channel helper caches." },
+  "Channel Update": { event: "channelUpdate", params: "(oldChannel, newChannel)", intents: ["Guilds"], use: "Audit channel name, topic, permission, and category changes." },
+  "Channel Delete": { event: "channelDelete", params: "(channel)", intents: ["Guilds"], use: "Clean stale channel IDs from command, log, and webhook configuration." },
+  "Thread Create": { event: "threadCreate", params: "(thread)", intents: ["Guilds"], use: "Track support or discussion threads without building a ticket framework." },
+  "Thread Update": { event: "threadUpdate", params: "(oldThread, newThread)", intents: ["Guilds"], use: "Observe archive, lock, and name changes." },
+  "Thread Delete": { event: "threadDelete", params: "(thread)", intents: ["Guilds"], use: "Clean thread-scoped jobs and caches." },
+  "Voice State Update": { event: "voiceStateUpdate", params: "(oldState, newState)", intents: ["GuildVoiceStates"], use: "Track joins, leaves, moves, mutes, and voice session metrics." },
+  "Presence Update": { event: "presenceUpdate", params: "(oldPresence, newPresence)", intents: ["GuildPresences"], use: "Track presence-driven features only when the privileged intent is intentionally enabled." },
+  "Error": { event: "error", params: "(error)", intents: ["None"], use: "Report gateway or runtime failures into logs and metrics." },
+  "Warn": { event: "warn", params: "(message)", intents: ["None"], use: "Surface non-fatal gateway warnings for operators." },
+  "Debug": { event: "debug", params: "(message)", intents: ["None"], use: "Inspect gateway internals during development without enabling noisy production logs." },
+  "Shard Ready": { event: "shardReady", params: "(shardId)", intents: ["Guilds"], use: "Track shard health in large bots." },
+  "Shard Disconnect": { event: "shardDisconnect", params: "(event, shardId)", intents: ["Guilds"], use: "Alert when a shard disconnects from the gateway." },
+  "Shard Reconnecting": { event: "shardReconnecting", params: "(shardId)", intents: ["Guilds"], use: "Mark shard status as degraded while reconnecting." }
+};
+
+const componentDetails = {
+  Buttons: "Buttons are short-lived interaction triggers. Prefer typed custom IDs and keep labels clear.",
+  "Select Menus": "Select menus collect one or more choices from users. Keep option sets small and validate values server-side.",
+  Modals: "Modals collect structured text input from an interaction. Keep fields short, private, and validated.",
+  "Text Inputs": "Text inputs live inside modals and should mirror the validation rules your handler expects.",
+  "Action Rows": "Action rows group compatible components and enforce Discord layout limits.",
+  "Typed Custom IDs": "Typed custom IDs replace manual string splitting with compact serialized data."
+};
+
 const groups = [
   {
     title: "Getting Started",
@@ -193,6 +315,7 @@ function renderIndex() {
 
 function renderPage(page) {
   const related = relatedPages(page).map((item) => `<a href="${item.slug}.html">${escapeHtml(item.title)}</a>`).join(" - ");
+  const adjacent = pageNavigation(page);
   return shell({
     title: page.title,
     group: page.group,
@@ -202,6 +325,7 @@ function renderPage(page) {
         <p class="eyebrow">${escapeHtml(page.group)}</p>
         <h1>${escapeHtml(page.title)}</h1>
         ${authorBlock(page.author)}
+        ${metaGrid(page)}
         ${section("Overview", overview(page))}
         ${section("Purpose And Use Cases", purpose(page))}
         ${section("Architecture Or Design Notes", architecture(page))}
@@ -212,6 +336,7 @@ function renderPage(page) {
         ${listSection("Common Mistakes", commonMistakes(page))}
         ${listSection("Troubleshooting", troubleshooting(page))}
         <section class="doc-section related"><h2>Related Pages</h2><p>${related}</p></section>
+        ${adjacent}
       </article>`
   });
 }
@@ -264,11 +389,46 @@ function authorBlock(item) {
   return `<div class="doc-author"><img src="${item.avatar}" alt="${escapeHtml(item.name)}"><span>Written by <strong>${escapeHtml(item.name)}</strong></span></div>`;
 }
 
+function metaGrid(page) {
+  const items = [
+    ["Section", page.group],
+    ["Level", learningLevel(page)],
+    ["Primary Command", primaryCommand(page)],
+    ["Production Focus", productionFocus(page)]
+  ];
+  return `<div class="doc-meta-grid">${items.map(([label, value]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("")}</div>`;
+}
+
 function overview(page) {
-  return `${escapeHtml(page.title)} is part of the ${escapeHtml(page.group)} area of Tsundere. This page explains the practical behavior, why it matters, and how it fits into a production-focused .yuri project.`;
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return `${escapeHtml(page.title)} is a Tsundere CLI command. ${escapeHtml(cli.purpose)} The command is designed for normal project folders, CI jobs, and local development terminals.`;
+  }
+  const event = eventDetails[page.title];
+  if (event) {
+    return `${escapeHtml(page.title)} documents the Discord gateway event \`${event.event}\`. Tsundere exposes it through \`client.on("${event.event}", ...)\` and uses generated Discord metadata so editor completions, callback parameters, and intent warnings stay close to Discord.js behavior.`;
+  }
+  if (page.groupSlug === "discord-components" && componentDetails[page.title]) {
+    return `${escapeHtml(page.title)} covers Discord component authoring in Tsundere. ${escapeHtml(componentDetails[page.title])} The goal is less manual payload wiring while keeping the Discord API shape visible.`;
+  }
+  if (page.groupSlug === "deployment") {
+    return `${escapeHtml(page.title)} explains how to move a Tsundere project from local development into a production environment. It focuses on reproducible builds, runtime startup, secrets, and operational recovery.`;
+  }
+  if (page.groupSlug === "scaling-observability") {
+    return `${escapeHtml(page.title)} explains how Tsundere projects stay observable and resilient as the bot or backend grows. It connects logs, metrics, health checks, cache behavior, and runtime operations.`;
+  }
+  return `${escapeHtml(page.title)} is part of the ${escapeHtml(page.group)} area of Tsundere. This page explains practical behavior, production usage, and how the topic fits into a real .yuri project.`;
 }
 
 function purpose(page) {
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return `${escapeHtml(cli.workflow)} This matters because Tsundere is meant to feel like a normal developer runtime: commands should work in any project folder, produce readable output, and leave source code separate from generated runtime files.`;
+  }
+  const event = eventDetails[page.title];
+  if (event) {
+    return `${escapeHtml(event.use)} Required intent guidance: ${escapeHtml(event.intents.join(", "))}. Use this page when deciding whether an event belongs in your bot, which partials are needed, and how to avoid noisy production listeners.`;
+  }
   if (page.groupSlug.includes("discord")) {
     return `Use this topic when building Discord bots that need predictable API behavior, strong editor help, and fewer runtime surprises. It keeps the Discord API visible while documenting the workflow Tsundere expects.`;
   }
@@ -282,12 +442,40 @@ function purpose(page) {
 }
 
 function architecture(page) {
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return `Command architecture: input is read from the current working directory, configuration is resolved from \`tsundere.config.json\`, package/runtime state is kept in normal project files plus \`.tsundere\`, and output is designed to be scriptable. Syntax: \`${escapeHtml(cli.syntax)}\`.`;
+  }
+  const event = eventDetails[page.title];
+  if (event) {
+    return `Gateway architecture: Discord.js receives the raw gateway event, @tsundere/discord maps it into a Tsundere-friendly typed object, YuriLS uses metadata for completions, and diagnostics warn when required intents or partials are missing. Callback signature: \`${event.params}\`.`;
+  }
+  if (page.groupSlug === "discord-commands") {
+    return `Command architecture uses builders and optional discovery. Files under \`src/commands\` can export command builders, route-based grouping can create paths like \`/admin ban\`, and \`tsundere dev\` can sync changed commands during development.`;
+  }
+  if (page.groupSlug === "tooling") {
+    return `Tooling architecture is split between the VS Code/Cursor extension, YuriLS, generated \`.yuri-cache\` metadata, and the CLI. This keeps editor features fast without requiring a separate package ecosystem.`;
+  }
   return `The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. ${escapeHtml(page.title)} should remain compatible with npm packages and should not require hidden framework magic.`;
 }
 
 function beginnerExample(page) {
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return cli.example;
+  }
+  const event = eventDetails[page.title];
+  if (event) {
+    return `import { Client, Intents } from "@tsundere/discord"\n\nconst client = new Client({\n  token: env.DISCORD_TOKEN,\n  intents: [${event.intents.includes("None") ? "Intents.Guilds" : event.intents.filter((item) => !item.includes("when") && !item.includes("Partials")).map((item) => `Intents.${item}`).join(", ") || "Intents.Guilds"}]\n})\n\nclient.on("${event.event}", async ${event.params} => {\n  log("${event.event} received")\n})\n\nclient.login()`;
+  }
   if (page.groupSlug === "cli") {
     return `tsundere ${page.title.toLowerCase().replaceAll(" ", "-")} --help\n# Read the command output, then run it from your project root.`;
+  }
+  if (page.groupSlug === "discord-commands") {
+    return `import { Slash } from "@tsundere/discord"\n\nexport default Slash.command("ping")\n  .description("Check bot latency")`;
+  }
+  if (page.groupSlug === "discord-components") {
+    return `import { Button, Row } from "@tsundere/discord"\n\nconst confirm = Button.success("confirm:1").label("Confirm")\nconst actions = Row.of(confirm)`;
   }
   if (page.groupSlug.includes("discord")) {
     return `import { Client, Intents } from "@tsundere/discord"\n\nconst client = new Client({\n  token: env.DISCORD_TOKEN,\n  intents: [Intents.Guilds]\n})\n\nclient.login()`;
@@ -299,8 +487,22 @@ function beginnerExample(page) {
 }
 
 function advancedExample(page) {
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return `${cli.example}\n\n# Production check\n${page.title === "start" ? "tsundere doctor && tsundere start" : "tsundere build && npm test"}`;
+  }
+  const event = eventDetails[page.title];
+  if (event) {
+    return `client.on("${event.event}", async ${event.params} => {\n  try {\n    await metrics.counter("discord_events_total").inc({ event: "${event.event}" })\n    await audit.write({ event: "${event.event}", receivedAt: new Date().toISOString() })\n  } catch err {\n    log("Event handler failed: " + err.message)\n  }\n})`;
+  }
   if (page.groupSlug === "scaling-observability") {
     return `import { createLogger } from "@tsundere/logger"\nimport { createDefaultMetrics } from "@tsundere/metrics"\n\nconst log = createLogger({ service: "bot", format: "json" })\nconst metrics = createDefaultMetrics()\n\nlog.info("${page.title} enabled")\nserver.get("/metrics", (req, res) => res.send(metrics.toPrometheus()))`;
+  }
+  if (page.groupSlug === "discord-commands") {
+    return `router.command("admin ban", async (ctx) => {\n  await ctx.deferReply({ ephemeral: true })\n  const target = ctx.options.user("target")\n  await ctx.guild.members.ban(target, { reason: ctx.options.string("reason") ?? "No reason" })\n  await ctx.editReply({ content: "Action complete" })\n})`;
+  }
+  if (page.groupSlug === "discord-components") {
+    return `const BanButton = Component.define<{ userId: Snowflake }>("ban")\n\nclient.component(BanButton, async (ctx) => {\n  await ctx.guild.members.ban(ctx.data.userId)\n  await ctx.reply({ content: "Done", ephemeral: true })\n})`;
   }
   if (page.groupSlug.includes("discord")) {
     return `client.on("interactionCreate", async (interaction) => {\n  if (interaction.isCommand("ping")) {\n    await interaction.deferReply({ ephemeral: true })\n    await interaction.editReply({ content: "pong" })\n  }\n})`;
@@ -309,10 +511,39 @@ function advancedExample(page) {
 }
 
 function reference(page) {
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return `Syntax: \`${escapeHtml(cli.syntax)}\`. Common flags: ${escapeHtml(cli.flags.join(", "))}. Typical workflow: ${escapeHtml(cli.workflow)} Related files include \`package.json\`, \`tsundere.config.json\`, \`tsundere-lock.yaml\`, \`tsundere-workspace.yaml\`, \`.tsundere/runtime-build\`, and \`build\` depending on the command.`;
+  }
+  const event = eventDetails[page.title];
+  if (event) {
+    return `Event name: \`${event.event}\`. Callback parameters: \`${event.params}\`. Required or recommended intents: ${escapeHtml(event.intents.join(", "))}. Use partials when Discord can emit incomplete cached data, especially for message delete and update flows.`;
+  }
+  if (page.groupSlug === "discord-components") {
+    return `Reference this page with Discord's component limits: custom IDs should stay under 100 characters, action rows have strict component counts, modals have input limits, and typed component helpers should serialize only the data needed by the handler.`;
+  }
   return `Reference details for ${escapeHtml(page.title)} should include accepted inputs, generated output, configuration keys, related CLI commands, diagnostics, and runtime behavior. Keep this page close to source examples and update it when APIs change.`;
 }
 
 function bestPractices(page) {
+  const event = eventDetails[page.title];
+  if (event) {
+    return [
+      `Register only the ${escapeHtml(event.event)} listener when the bot actually needs it.`,
+      `Enable the smallest required intent set: ${escapeHtml(event.intents.join(", "))}.`,
+      "Keep event handlers thin and move business logic into services.",
+      "Log failures with enough context to debug without leaking tokens or private data."
+    ];
+  }
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return [
+      `Run \`${escapeHtml(cli.syntax.split(" ")[0])} ${escapeHtml(page.title)}\` from the project root unless the command says otherwise.`,
+      "Keep generated output out of source edits.",
+      "Use command output in CI so failures are visible in logs.",
+      "Pair CLI changes with `tsundere doctor`, build, and tests before release."
+    ];
+  }
   return [
     `Keep ${escapeHtml(page.title)} usage explicit and easy to test.`,
     "Prefer small modules with clear imports and exports.",
@@ -322,6 +553,24 @@ function bestPractices(page) {
 }
 
 function commonMistakes(page) {
+  const event = eventDetails[page.title];
+  if (event) {
+    return [
+      "Forgetting the required gateway intent or privileged intent toggle.",
+      "Assuming uncached messages or members always include every field.",
+      "Doing heavy database work directly inside the event callback.",
+      "Logging message content or user data without a clear moderation need."
+    ];
+  }
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return [
+      "Running the command from the wrong folder.",
+      "Ignoring a failed install or build before starting the runtime.",
+      "Confusing `tsundere update <package>` with `tsundere updater` for toolchain updates.",
+      `Skipping the command-specific troubleshooting note: ${escapeHtml(cli.troubleshoot)}`
+    ];
+  }
   return [
     "Skipping configuration validation before production.",
     "Copying examples without replacing placeholder IDs, tokens, or paths.",
@@ -331,6 +580,24 @@ function commonMistakes(page) {
 }
 
 function troubleshooting(page) {
+  const cli = cliDetails[page.title];
+  if (cli) {
+    return [
+      cli.troubleshoot,
+      "Run `tsundere doctor` for environment and runtime checks.",
+      "Run with verbose diagnostics when command output is too short.",
+      "Check project config, package metadata, and generated runtime directories."
+    ];
+  }
+  const event = eventDetails[page.title];
+  if (event) {
+    return [
+      `Confirm the bot is listening for \`${event.event}\` and that the gateway connection reached ready.`,
+      `Verify required intents: ${escapeHtml(event.intents.join(", "))}.`,
+      "Check Discord developer portal privileged intent settings when member, presence, or content data is missing.",
+      "Use structured logs to confirm whether the event did not fire or the handler failed."
+    ];
+  }
   return [
     "Run `tsundere doctor` to inspect environment and project setup.",
     "Run `tsundere build` and read the first compiler diagnostic before changing multiple files.",
@@ -347,7 +614,72 @@ function relatedPages(page) {
 }
 
 function renderBookData() {
-  return `window.TSUNDERE_BOOK = ${JSON.stringify({ groups, pages: pages.map(({ author: _author, ...page }) => page) }, null, 2)};\n`;
+  return `window.TSUNDERE_BOOK = ${JSON.stringify({ groups, pages: pages.map(({ author: _author, ...page }) => ({ ...page, summary: plainText(overview(page)), body: pageSearchText(page) })) }, null, 2)};\n`;
+}
+
+function learningLevel(page) {
+  if (page.groupSlug === "getting-started" || page.groupSlug === "examples") {
+    return "Beginner to production";
+  }
+  if (page.groupSlug === "compiler" || page.groupSlug === "scaling-observability") {
+    return "Advanced";
+  }
+  return "Practical";
+}
+
+function primaryCommand(page) {
+  if (page.groupSlug === "cli") {
+    return `tsundere ${page.title}`;
+  }
+  if (page.groupSlug === "deployment") {
+    return "tsundere build";
+  }
+  if (page.groupSlug === "tooling") {
+    return "tsundere types sync";
+  }
+  if (page.groupSlug.includes("discord")) {
+    return "tsundere dev";
+  }
+  return "tsundere doctor";
+}
+
+function productionFocus(page) {
+  if (page.groupSlug.includes("discord")) {
+    return "Intents, permissions, API limits";
+  }
+  if (page.groupSlug === "cli") {
+    return "Repeatable project commands";
+  }
+  if (page.groupSlug === "testing") {
+    return "Reliable CI feedback";
+  }
+  return "Clear runtime behavior";
+}
+
+function pageNavigation(page) {
+  const current = pages.findIndex((item) => item.slug === page.slug);
+  const previous = pages[current - 1];
+  const next = pages[current + 1];
+  if (!previous && !next) {
+    return "";
+  }
+  return `<nav class="page-neighbors">${previous ? `<a href="${previous.slug}.html"><span>Previous</span><strong>${escapeHtml(previous.title)}</strong></a>` : "<span></span>"}${next ? `<a href="${next.slug}.html"><span>Next</span><strong>${escapeHtml(next.title)}</strong></a>` : "<span></span>"}</nav>`;
+}
+
+function pageSearchText(page) {
+  return plainText([
+    overview(page),
+    purpose(page),
+    architecture(page),
+    reference(page),
+    ...bestPractices(page),
+    ...commonMistakes(page),
+    ...troubleshooting(page)
+  ].join(" "));
+}
+
+function plainText(value) {
+  return String(value).replace(/<[^>]*>/gu, "").replace(/\s+/gu, " ").trim();
 }
 
 function slug(value) {

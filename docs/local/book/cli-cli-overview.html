@@ -28,7 +28,8 @@
         <p class="eyebrow">CLI</p>
         <h1>CLI Overview</h1>
         <div class="doc-author"><img src="https://cdn.discordapp.com/avatars/1212798448525512785/3939e4e22234f3e7ce8247988ad43d3d.webp?size=1536" alt="Luckyz"><span>Written by <strong>Luckyz</strong></span></div>
-        <section class="doc-section"><h2>Overview</h2><p>CLI Overview is part of the CLI area of Tsundere. This page explains the practical behavior, why it matters, and how it fits into a production-focused .yuri project.</p></section>
+        <div class="doc-meta-grid"><div><span>Section</span><strong>CLI</strong></div><div><span>Level</span><strong>Practical</strong></div><div><span>Primary Command</span><strong>tsundere CLI Overview</strong></div><div><span>Production Focus</span><strong>Repeatable project commands</strong></div></div>
+        <section class="doc-section"><h2>Overview</h2><p>CLI Overview is part of the CLI area of Tsundere. This page explains practical behavior, production usage, and how the topic fits into a real .yuri project.</p></section>
         <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use this topic when running Tsundere from a terminal or automation. It covers command shape, project workflow, flags, and failure modes so the CLI stays understandable.</p></section>
         <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. CLI Overview should remain compatible with npm packages and should not require hidden framework magic.</p></section>
         <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere cli-overview --help
@@ -45,6 +46,7 @@
         <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Skipping configuration validation before production.</li><li>Copying examples without replacing placeholder IDs, tokens, or paths.</li><li>Ignoring warnings that point to Discord intents, permissions, or runtime setup.</li><li>Mixing generated output with source files.</li></ul></section>
         <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run `tsundere doctor` to inspect environment and project setup.</li><li>Run `tsundere build` and read the first compiler diagnostic before changing multiple files.</li><li>Check `.env`, `tsundere.config.json`, and local runtime package resolution.</li><li>Search the docs for CLI Overview and related terms.</li></ul></section>
         <section class="doc-section related"><h2>Related Pages</h2><p><a href="cli-configuration.html">Configuration</a> - <a href="cli-create.html">create</a> - <a href="cli-dev.html">dev</a> - <a href="getting-started-introduction.html">Introduction</a></p></section>
+        <nav class="page-neighbors"><a href="yuri-language-naming-conventions.html"><span>Previous</span><strong>Naming Conventions</strong></a><a href="cli-configuration.html"><span>Next</span><strong>Configuration</strong></a></nav>
       </article></main>
   </div>
 </body>

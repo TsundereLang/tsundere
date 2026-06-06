@@ -28,28 +28,26 @@
         <p class="eyebrow">Discord Components</p>
         <h1>Role Selects</h1>
         <div class="doc-author"><img src="https://cdn.discordapp.com/avatars/1212798448525512785/3939e4e22234f3e7ce8247988ad43d3d.webp?size=1536" alt="Luckyz"><span>Written by <strong>Luckyz</strong></span></div>
-        <section class="doc-section"><h2>Overview</h2><p>Role Selects is part of the Discord Components area of Tsundere. This page explains the practical behavior, why it matters, and how it fits into a production-focused .yuri project.</p></section>
+        <div class="doc-meta-grid"><div><span>Section</span><strong>Discord Components</strong></div><div><span>Level</span><strong>Practical</strong></div><div><span>Primary Command</span><strong>tsundere dev</strong></div><div><span>Production Focus</span><strong>Intents, permissions, API limits</strong></div></div>
+        <section class="doc-section"><h2>Overview</h2><p>Role Selects is part of the Discord Components area of Tsundere. This page explains practical behavior, production usage, and how the topic fits into a real .yuri project.</p></section>
         <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use this topic when building Discord bots that need predictable API behavior, strong editor help, and fewer runtime surprises. It keeps the Discord API visible while documenting the workflow Tsundere expects.</p></section>
         <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. Role Selects should remain compatible with npm packages and should not require hidden framework magic.</p></section>
-        <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents } from &quot;@tsundere/discord&quot;
+        <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Button, Row } from &quot;@tsundere/discord&quot;
 
-const client = new Client({
-  token: env.DISCORD_TOKEN,
-  intents: [Intents.Guilds]
-})
+const confirm = Button.success(&quot;confirm:1&quot;).label(&quot;Confirm&quot;)
+const actions = Row.of(confirm)</code></pre></section>
+        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>const BanButton = Component.define&lt;{ userId: Snowflake }&gt;(&quot;ban&quot;)
 
-client.login()</code></pre></section>
-        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on(&quot;interactionCreate&quot;, async (interaction) =&gt; {
-  if (interaction.isCommand(&quot;ping&quot;)) {
-    await interaction.deferReply({ ephemeral: true })
-    await interaction.editReply({ content: &quot;pong&quot; })
-  }
+client.component(BanButton, async (ctx) =&gt; {
+  await ctx.guild.members.ban(ctx.data.userId)
+  await ctx.reply({ content: &quot;Done&quot;, ephemeral: true })
 })</code></pre></section>
-        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference details for Role Selects should include accepted inputs, generated output, configuration keys, related CLI commands, diagnostics, and runtime behavior. Keep this page close to source examples and update it when APIs change.</p></section>
+        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference this page with Discord's component limits: custom IDs should stay under 100 characters, action rows have strict component counts, modals have input limits, and typed component helpers should serialize only the data needed by the handler.</p></section>
         <section class="doc-section"><h2>Best Practices</h2><ul><li>Keep Role Selects usage explicit and easy to test.</li><li>Prefer small modules with clear imports and exports.</li><li>Document project-specific configuration next to the code that uses it.</li><li>Use diagnostics, tests, and examples before deploying to production.</li></ul></section>
         <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Skipping configuration validation before production.</li><li>Copying examples without replacing placeholder IDs, tokens, or paths.</li><li>Ignoring warnings that point to Discord intents, permissions, or runtime setup.</li><li>Mixing generated output with source files.</li></ul></section>
         <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run `tsundere doctor` to inspect environment and project setup.</li><li>Run `tsundere build` and read the first compiler diagnostic before changing multiple files.</li><li>Check `.env`, `tsundere.config.json`, and local runtime package resolution.</li><li>Search the docs for Role Selects and related terms.</li></ul></section>
         <section class="doc-section related"><h2>Related Pages</h2><p><a href="discord-components-buttons.html">Buttons</a> - <a href="discord-components-button-styles.html">Button Styles</a> - <a href="discord-components-select-menus.html">Select Menus</a> - <a href="getting-started-introduction.html">Introduction</a></p></section>
+        <nav class="page-neighbors"><a href="discord-components-user-selects.html"><span>Previous</span><strong>User Selects</strong></a><a href="discord-components-channel-selects.html"><span>Next</span><strong>Channel Selects</strong></a></nav>
       </article></main>
   </div>
 </body>

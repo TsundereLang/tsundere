@@ -28,9 +28,10 @@
         <p class="eyebrow">Discord Events</p>
         <h1>Guild Delete</h1>
         <div class="doc-author"><img src="https://cdn.discordapp.com/avatars/1212798448525512785/3939e4e22234f3e7ce8247988ad43d3d.webp?size=1536" alt="Luckyz"><span>Written by <strong>Luckyz</strong></span></div>
-        <section class="doc-section"><h2>Overview</h2><p>Guild Delete is part of the Discord Events area of Tsundere. This page explains the practical behavior, why it matters, and how it fits into a production-focused .yuri project.</p></section>
-        <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use this topic when building Discord bots that need predictable API behavior, strong editor help, and fewer runtime surprises. It keeps the Discord API visible while documenting the workflow Tsundere expects.</p></section>
-        <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. Guild Delete should remain compatible with npm packages and should not require hidden framework magic.</p></section>
+        <div class="doc-meta-grid"><div><span>Section</span><strong>Discord Events</strong></div><div><span>Level</span><strong>Practical</strong></div><div><span>Primary Command</span><strong>tsundere dev</strong></div><div><span>Production Focus</span><strong>Intents, permissions, API limits</strong></div></div>
+        <section class="doc-section"><h2>Overview</h2><p>Guild Delete documents the Discord gateway event `guildDelete`. Tsundere exposes it through `client.on("guildDelete", ...)` and uses generated Discord metadata so editor completions, callback parameters, and intent warnings stay close to Discord.js behavior.</p></section>
+        <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Disable guild jobs and clean stale cache for a removed server. Required intent guidance: Guilds. Use this page when deciding whether an event belongs in your bot, which partials are needed, and how to avoid noisy production listeners.</p></section>
+        <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>Gateway architecture: Discord.js receives the raw gateway event, @tsundere/discord maps it into a Tsundere-friendly typed object, YuriLS uses metadata for completions, and diagnostics warn when required intents or partials are missing. Callback signature: `(guild)`.</p></section>
         <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents } from &quot;@tsundere/discord&quot;
 
 const client = new Client({
@@ -38,18 +39,25 @@ const client = new Client({
   intents: [Intents.Guilds]
 })
 
+client.on(&quot;guildDelete&quot;, async (guild) =&gt; {
+  log(&quot;guildDelete received&quot;)
+})
+
 client.login()</code></pre></section>
-        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on(&quot;interactionCreate&quot;, async (interaction) =&gt; {
-  if (interaction.isCommand(&quot;ping&quot;)) {
-    await interaction.deferReply({ ephemeral: true })
-    await interaction.editReply({ content: &quot;pong&quot; })
+        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on(&quot;guildDelete&quot;, async (guild) =&gt; {
+  try {
+    await metrics.counter(&quot;discord_events_total&quot;).inc({ event: &quot;guildDelete&quot; })
+    await audit.write({ event: &quot;guildDelete&quot;, receivedAt: new Date().toISOString() })
+  } catch err {
+    log(&quot;Event handler failed: &quot; + err.message)
   }
 })</code></pre></section>
-        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference details for Guild Delete should include accepted inputs, generated output, configuration keys, related CLI commands, diagnostics, and runtime behavior. Keep this page close to source examples and update it when APIs change.</p></section>
-        <section class="doc-section"><h2>Best Practices</h2><ul><li>Keep Guild Delete usage explicit and easy to test.</li><li>Prefer small modules with clear imports and exports.</li><li>Document project-specific configuration next to the code that uses it.</li><li>Use diagnostics, tests, and examples before deploying to production.</li></ul></section>
-        <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Skipping configuration validation before production.</li><li>Copying examples without replacing placeholder IDs, tokens, or paths.</li><li>Ignoring warnings that point to Discord intents, permissions, or runtime setup.</li><li>Mixing generated output with source files.</li></ul></section>
-        <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run `tsundere doctor` to inspect environment and project setup.</li><li>Run `tsundere build` and read the first compiler diagnostic before changing multiple files.</li><li>Check `.env`, `tsundere.config.json`, and local runtime package resolution.</li><li>Search the docs for Guild Delete and related terms.</li></ul></section>
+        <section class="doc-section"><h2>Reference And API Details</h2><p>Event name: `guildDelete`. Callback parameters: `(guild)`. Required or recommended intents: Guilds. Use partials when Discord can emit incomplete cached data, especially for message delete and update flows.</p></section>
+        <section class="doc-section"><h2>Best Practices</h2><ul><li>Register only the guildDelete listener when the bot actually needs it.</li><li>Enable the smallest required intent set: Guilds.</li><li>Keep event handlers thin and move business logic into services.</li><li>Log failures with enough context to debug without leaking tokens or private data.</li></ul></section>
+        <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Forgetting the required gateway intent or privileged intent toggle.</li><li>Assuming uncached messages or members always include every field.</li><li>Doing heavy database work directly inside the event callback.</li><li>Logging message content or user data without a clear moderation need.</li></ul></section>
+        <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Confirm the bot is listening for `guildDelete` and that the gateway connection reached ready.</li><li>Verify required intents: Guilds.</li><li>Check Discord developer portal privileged intent settings when member, presence, or content data is missing.</li><li>Use structured logs to confirm whether the event did not fire or the handler failed.</li></ul></section>
         <section class="doc-section related"><h2>Related Pages</h2><p><a href="discord-events-ready.html">Ready</a> - <a href="discord-events-message-create.html">Message Create</a> - <a href="discord-events-message-update.html">Message Update</a> - <a href="getting-started-introduction.html">Introduction</a></p></section>
+        <nav class="page-neighbors"><a href="discord-events-guild-create.html"><span>Previous</span><strong>Guild Create</strong></a><a href="discord-events-member-add.html"><span>Next</span><strong>Member Add</strong></a></nav>
       </article></main>
   </div>
 </body>

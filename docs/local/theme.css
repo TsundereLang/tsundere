@@ -191,6 +191,38 @@ html.dark .theme-toggle {
   border-radius: 999px;
 }
 
+.doc-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.doc-meta-grid div {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.85rem 0.95rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.doc-meta-grid span {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.doc-meta-grid strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: #0f172a;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
 .docs-dropdown {
   border-radius: 0.5rem;
 }
@@ -318,6 +350,40 @@ html.dark .theme-toggle {
   padding: 1.1rem;
 }
 
+.page-neighbors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 2rem;
+}
+
+.page-neighbors a {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  padding: 1rem;
+  color: #0f172a;
+}
+
+.page-neighbors a:last-child {
+  text-align: right;
+}
+
+.page-neighbors span {
+  display: block;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.page-neighbors strong {
+  display: block;
+  margin-top: 0.3rem;
+  color: #be185d;
+}
+
 .book-group a {
   font-size: 0.8rem;
 }
@@ -361,6 +427,22 @@ html.dark .book-hero {
 html.dark .book-card {
   border-color: #1e293b;
   background: #0f172a;
+}
+
+html.dark .doc-meta-grid div,
+html.dark .page-neighbors a {
+  border-color: #1e293b;
+  background: #0f172a;
+}
+
+html.dark .doc-meta-grid strong,
+html.dark .page-neighbors a {
+  color: #e2e8f0;
+}
+
+html.dark .doc-meta-grid span,
+html.dark .page-neighbors span {
+  color: #94a3b8;
 }
 
 html.dark .book-card p,
