@@ -248,7 +248,7 @@ const docsIndex = [
   {
     href: "observability.html",
     title: "Observability",
-    text: "Observability explains structured logs, JSON output, pretty development logs, secret redaction, worker metadata, shard metadata, request IDs, Prometheus metrics, Grafana dashboards, Loki queries, OpenTelemetry traces, runtime metrics, compiler metrics, CLI metrics, package manager metrics, cache metrics, command latency, REST rate limits, memory, CPU, and gateway latency."
+    text: "Observability explains @tsundere/logger, structured logs, JSON output, pretty development logs, secret redaction, worker metadata, shard metadata, request IDs, Prometheus metrics, Grafana dashboards, Loki queries, OpenTelemetry traces, runtime metrics, compiler metrics, CLI metrics, package manager metrics, cache metrics, command latency, REST rate limits, memory, CPU, and gateway latency."
   },
   {
     href: "security.html",

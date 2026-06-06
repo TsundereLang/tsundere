@@ -1,0 +1,41 @@
+import { createLogger } from "@tsundere/logger"
+
+const log = createLogger({
+  service: "community-bot",
+  format: env.NODE_ENV == "production" ? "json" : "pretty",
+  metadata: {
+    shardId: 0,
+    workerId: "main"
+  },
+  redact: ["DISCORD_TOKEN", "GITHUB_TOKEN", "DATABASE_URL"]
+})
+
+export function commandLogger(commandName, interaction) {
+  return log.child({
+    requestId: `cmd_${interaction.id}`,
+    command: commandName,
+    guildId: interaction.guildId,
+    userId: interaction.user.id
+  })
+}
+
+client.on("interactionCreate", async (interaction) => {
+  if interaction.isCommand("ping") {
+    const commandLog = commandLogger("ping", interaction)
+    commandLog.info("Command started")
+
+    try {
+      await interaction.reply({
+        content: "pong",
+        ephemeral: true
+      })
+
+      commandLog.info("Command completed", {
+        latencyMs: client.ping
+      })
+    }
+    catch err {
+      commandLog.error("Command failed", err)
+    }
+  }
+})
