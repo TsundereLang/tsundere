@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VS Code Extension - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="yurils.html">YuriLS</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="vscode.html">VS Code</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">VS Code Extension</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">The official extension makes `.yuri` files feel native in VS Code and Cursor with syntax highlighting, file icons, commands, diagnostics, and YuriLS integration.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="mt-3 text-slate-700">The extension packages editor support, starts YuriLS, watches project files, surfaces diagnostics, and provides commands for common Tsundere workflows.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Why It Exists</h2>
+        <p class="mt-3 text-slate-700">Discord development is editor-heavy. A good extension should autocomplete events, builder methods, command options, interaction methods, and imports while explaining required intents and permissions in hover docs.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Use It</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Install it when editing `.yuri` files in VS Code or Cursor.</li>
+          <li>Use it to run `Tsundere: Build Project` and `Tsundere: Run Dev Server` from the command palette.</li>
+          <li>Use it after `tsundere types sync` to inspect generated Discord IntelliSense.</li>
+          <li>Use it when onboarding new developers so docs, examples, and commands are discoverable.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Commands</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>Tsundere: Create Project
+Tsundere: Run Dev Server
+Tsundere: Build Project
+Tsundere: Sync Commands
+Tsundere: Generate Types
+Tsundere: Open Docs
+Tsundere: Format File
+Tsundere: Restart Language Server</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Discord Editing Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client } from "@tsundere/discord"
+
+client.on("
+// Extension should suggest ready, interactionCreate, messageCreate, and more.
+
+Embed.create().
+// Extension should suggest title(), description(), color(), field(), footer().</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Advanced Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>Slash.command("ban")
+  .
+// description()
+// option()
+// subcommand()
+// group()
+// permission()
+// guildOnly()
+// register()</code></pre>
+        <p class="mt-4 text-slate-600">Completion lists should include docs, parameter types, return types, and examples, not just method names.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Do not install an old VSIX after rebuilding a newer extension.</li>
+          <li>Do not forget to restart YuriLS when generated metadata changes.</li>
+          <li>Do not expect completions in files that VS Code does not recognize as `.yuri`.</li>
+          <li>Do not confuse extension install with project dependency install; both matter.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Performance Notes</h2>
+        <p class="mt-3 text-slate-700">The extension should avoid constant type regeneration. It should hash package versions, lockfiles, compiler versions, and metadata inputs, then regenerate only when something meaningful changes.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
+        <p class="mt-2 text-pink-900"><a href="yurils.html">YuriLS</a> · <a href="discord.html">Discord Guide</a> · <a href="examples.html">Examples</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -53,6 +53,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     addDiscordDropdown(nav);
+    addToolingDropdown(nav);
     addRoadmapDropdown(nav);
   }
 
@@ -114,6 +115,29 @@ function addDiscordDropdown(nav) {
   discordLink?.replaceWith(details);
 }
 
+function addToolingDropdown(nav) {
+  if (nav.querySelector(".tooling-dropdown")) {
+    return;
+  }
+  const current = location.pathname.split("/").pop();
+  const pages = new Set(["cli.html", "compiler.html", "runtime.html", "package-manager.html", "yurils.html", "vscode.html"]);
+  const isToolingPage = pages.has(current);
+  const details = document.createElement("details");
+  details.className = isToolingPage ? "docs-dropdown tooling-dropdown active" : "docs-dropdown tooling-dropdown";
+  details.open = isToolingPage;
+  details.innerHTML = `
+    <summary>Tooling</summary>
+    <a href="cli.html" class="${current === "cli.html" ? "active" : ""}">CLI</a>
+    <a href="compiler.html" class="${current === "compiler.html" ? "active" : ""}">Compiler</a>
+    <a href="runtime.html" class="${current === "runtime.html" ? "active" : ""}">Runtime</a>
+    <a href="package-manager.html" class="${current === "package-manager.html" ? "active" : ""}">Package Manager</a>
+    <a href="yurils.html" class="${current === "yurils.html" ? "active" : ""}">YuriLS</a>
+    <a href="vscode.html" class="${current === "vscode.html" ? "active" : ""}">VS Code</a>
+  `;
+  const cliLink = nav.querySelector('a[href="cli.html"]');
+  cliLink?.replaceWith(details);
+}
+
 function addRoadmapDropdown(nav) {
   if (nav.querySelector(".roadmap-dropdown")) {
     return;
@@ -170,6 +194,31 @@ const docsIndex = [
     href: "cli.html",
     title: "CLI and Runtime",
     text: "CLI commands include tsundere create, install, update package, dev, build, start, version, updater, commands sync, types sync, docs, runtime install, lint, format, test, doctor, plugin install, store path, store prune, and cache clean. Runtime flow compiles .yuri into build and emits runnable JavaScript into .tsundere/runtime-build. tsundere start runs main.js through Node. tsundere dev watches and restarts."
+  },
+  {
+    href: "compiler.html",
+    title: "Compiler",
+    text: "Compiler documentation explains .yuri source, project scanner, syntax lowering, diagnostics, source maps, build output, runtime output, tsundere build, tsundere dev, strict diagnostics, command discovery, routeBased commands, AST roadmap, incremental builds, dependency graph caching, and common generated file mistakes."
+  },
+  {
+    href: "runtime.html",
+    title: "Runtime",
+    text: "Runtime documentation explains .tsundere runtime-build, tsundere start, tsundere dev, local @tsundere/discord runtime package, file .tsundere runtime discord dependency, runtime install, production startup, Node compatible modules, gateway readiness, and avoiding manual node build main ts commands."
+  },
+  {
+    href: "package-manager.html",
+    title: "Package Manager",
+    text: "Package manager documentation explains tsundere install, add, remove, update, npm compatibility, package json, package lock, tsundere workspace yaml, tsundere lock yaml, global store, store path, store prune, cache clean, linkMode auto hardlink copy, private packages, and difference between tsundere update package and tsundere updater self updates."
+  },
+  {
+    href: "yurils.html",
+    title: "YuriLS",
+    text: "YuriLS documentation explains language server parsing, workspace indexing, completions, hover docs, diagnostics, import analysis, symbol tracking, Discord metadata, .yuri-cache discord events builders docs imports, type narrowing, interaction guards, event autocomplete, and metadata hashing."
+  },
+  {
+    href: "vscode.html",
+    title: "VS Code Extension",
+    text: "VS Code extension documentation explains syntax highlighting, file icons, semantic highlighting, IntelliSense, hover docs, signature help, auto imports, refactoring, rename, find references, go to definition, diagnostics, inlay hints, command palette actions, Cursor support, VSIX rebuilds, and restarting YuriLS."
   },
   {
     href: "templates.html",

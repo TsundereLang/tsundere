@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compiler - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="language.html">Language</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="compiler.html">Compiler</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">Compiler</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">The Tsundere compiler turns `.yuri` files into JavaScript or TypeScript that can run on Node.js while preserving source maps, module relationships, and Discord-aware diagnostics.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="mt-3 text-slate-700">The current compiler is intentionally practical: it scans project files, lowers supported `.yuri` syntax into target output, writes normal build files, and creates optimized runtime output for `tsundere start`.</p>
+        <p class="mt-3 text-slate-700">The long-term compiler direction is a full parser and typed AST pipeline with incremental builds, richer source maps, deeper Discord validation, and language server metadata.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Why It Exists</h2>
+        <p class="mt-3 text-slate-700">Tsundere needs to feel like its own ecosystem without breaking npm compatibility. The compiler is the bridge: developers write `.yuri`, but the final runtime still behaves like a Node project.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Use It</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Use `tsundere build` before production deploys.</li>
+          <li>Use `tsundere dev` when you want watch mode and runtime restarts.</li>
+          <li>Use source maps when debugging generated output back to `.yuri` lines.</li>
+          <li>Use diagnostics to catch Discord intent, permission, and builder mistakes before runtime.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Build Flow</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>.yuri files
+  -&gt; project scanner
+  -&gt; syntax lowering
+  -&gt; diagnostics
+  -&gt; build/*.js or build/*.ts
+  -&gt; .tsundere/runtime-build/*.js
+  -&gt; tsundere start</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Configuration Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
+  "entry": "src/main.yuri",
+  "outDir": "build",
+  "runtimeOutDir": ".tsundere/runtime-build",
+  "target": "javascript",
+  "sourceMaps": true,
+  "strict": true,
+  "diagnostics": {
+    "warnings": true,
+    "verbose": false,
+    "color": true
+  }
+}</code></pre>
+        <p class="mt-4 text-slate-600">Keep source maps on during development. For protected production builds, source maps should be stripped unless you have a private symbol server or internal artifact store.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Advanced Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
+  "commands": {
+    "discovery": true,
+    "routeBased": false,
+    "directory": "./src/commands",
+    "groups": {
+      "./src/commands/admin": {
+        "routeBased": true,
+        "groupName": "admin"
+      }
+    }
+  }
+}</code></pre>
+        <p class="mt-4 text-slate-600">Command discovery is compiler-adjacent because the project scanner can understand files, routes, exports, and command metadata before the bot starts.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Do not edit generated files in `build` or `.tsundere/runtime-build`; edit source `.yuri` files.</li>
+          <li>Do not rely on global command sync timing while testing command changes.</li>
+          <li>Do not suppress warnings permanently when they point to missing intents or unsafe Discord operations.</li>
+          <li>Do not assume every future `.yuri` syntax idea already exists in the current compiler.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Performance Notes</h2>
+        <p class="mt-3 text-slate-700">Large-project performance should come from incremental file scanning, AST caching, dependency graph caching, and parallel compilation. Today, keep projects organized and avoid unnecessary generated files in source directories.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
+        <p class="mt-2 text-pink-900"><a href="runtime.html">Runtime</a> · <a href="cli.html">CLI</a> · <a href="language.html">Language</a> · <a href="protect.html">Protect</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

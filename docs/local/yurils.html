@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YuriLS - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="language.html">Language</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="yurils.html">YuriLS</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="vscode.html">VS Code</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">YuriLS</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">YuriLS is the Tsundere language server. It powers editor completions, hover docs, diagnostics, go-to-definition, and Discord-aware intelligence for `.yuri` files.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="mt-3 text-slate-700">The language server indexes the workspace, parses open files, tracks imports and symbols, reads generated Discord metadata, and returns language server protocol responses to editors.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Why It Exists</h2>
+        <p class="mt-3 text-slate-700">A custom language only feels real when the editor understands it. YuriLS makes `.yuri` feel intentional instead of being plain text with a custom extension.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Use It</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Use YuriLS through the official VS Code or Cursor extension.</li>
+          <li>Restart YuriLS after changing generated type metadata.</li>
+          <li>Run `tsundere types sync` when Discord packages change.</li>
+          <li>Use diagnostics to catch syntax, import, config, and Discord usage problems.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Discord Metadata Flow</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>discord.js .d.ts files
+  -&gt; TypeScript extractor
+  -&gt; intermediate type graph
+  -&gt; Tsundere type mapper
+  -&gt; .yuri-cache/discord.*.json
+  -&gt; YuriLS completions and hovers</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Completion Examples</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on("
+// ready
+// interactionCreate
+// messageCreate
+// guildMemberAdd
+
+interaction.
+// reply()
+// deferReply()
+// editReply()
+// followUp()
+// isButton()</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Advanced Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>if (interaction.isButton()) {
+  interaction.customId
+  // YuriLS should narrow interaction to ButtonInteraction here.
+}</code></pre>
+        <p class="mt-4 text-slate-600">Type narrowing is a major editor goal. Checks like `isCommand`, `isButton`, `isModalSubmit`, and select menu guards should influence completions inside the block.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Do not expect Discord completions if `@tsundere/discord` is not installed or metadata is missing.</li>
+          <li>Do not keep stale `.yuri-cache` files after major Discord package updates.</li>
+          <li>Do not confuse TypeScript signatures with Tsundere display signatures; YuriLS should show `.yuri`-style signatures.</li>
+          <li>Do not ignore import diagnostics; missing local runtime packages usually break Node startup too.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Performance Notes</h2>
+        <p class="mt-3 text-slate-700">Language servers must stay responsive. YuriLS should cache parsed files, debounce diagnostics, hash metadata inputs, and avoid regenerating Discord types on every keystroke.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
+        <p class="mt-2 text-pink-900"><a href="vscode.html">VS Code Extension</a> · <a href="discord-intelligence.html">Discord Intelligence</a> · <a href="language.html">Language</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
