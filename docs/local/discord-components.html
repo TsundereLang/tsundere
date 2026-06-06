@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Discord Components - Tsundere Docs</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="theme.css"><script src="theme.js" defer></script></head>
+<body class="bg-white text-slate-900"><div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]"><aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen"><div class="flex items-center gap-3"><img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover"><div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div></div><nav class="mt-8 space-y-1 text-sm"><a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a><a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a><a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="discord-components.html">Components</a></nav></aside>
+<main class="mx-auto w-full max-w-5xl px-6 py-10">
+<h1 class="text-4xl font-bold tracking-tight">Discord Components</h1>
+<p class="mt-4 text-lg leading-8 text-slate-600">Components are buttons, select menus, rows, and newer layout elements that let users interact without typing commands.</p>
+<section class="mt-10"><h2 class="text-2xl font-semibold">Overview</h2><p class="mt-3 text-slate-700">Tsundere exposes builder helpers for buttons, selects, rows, and Discord's newer component layouts. The goal is clean construction, typed custom IDs, editor completion, and compile-time Discord limit warnings.</p></section>
+<section class="mt-10"><h2 class="text-2xl font-semibold">Why It Exists</h2><p class="mt-3 text-slate-700">Raw component IDs often become fragile strings like `ban_123`. Tsundere's component direction makes encoded data typed and keeps handlers from hand-parsing IDs.</p></section>
+<section class="mt-10"><h2 class="text-2xl font-semibold">When To Use It</h2><ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700"><li>Use buttons for short decisions.</li><li>Use selects when users choose from many options.</li><li>Use rows to group related controls.</li><li>Use layout components for richer message surfaces when supported by Discord clients.</li></ul></section>
+<section class="mt-10"><h2 class="text-2xl font-semibold">Button Example</h2><pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Button, Row } from "@tsundere/discord"
+
+const actions = Row.of(
+  Button.success("confirm_purchase").label("Confirm"),
+  Button.danger("cancel_purchase").label("Cancel")
+)</code></pre></section>
+<section class="mt-10"><h2 class="text-2xl font-semibold">Typed Component Example</h2><pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>const BanButton = Component.define&lt;{
+  userId: string
+}&gt;("ban")
+
+const button = Button.danger(
+  BanButton.create({ userId: member.id })
+).label("Ban")</code></pre></section>
+<section class="mt-10"><h2 class="text-2xl font-semibold">Advanced Layout Example</h2><pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>const panel = Components.container()
+  .accentColor("#ff7ab6")
+  .add(
+    Components.section()
+      .content("Release notifications")
+      .accessory(Button.primary("role_release").label("Toggle"))
+  )</code></pre></section>
+<section class="mt-10"><h2 class="text-2xl font-semibold">Common Mistakes</h2><ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700"><li>Putting too many buttons in one row.</li><li>Using custom IDs longer than Discord allows.</li><li>Assuming a button interaction has command fields.</li><li>Forgetting to handle timeout or stale component state.</li></ul></section>
+<section class="mt-10"><h2 class="text-2xl font-semibold">Performance Notes</h2><p class="mt-3 text-slate-700">Component handlers should respond quickly. Defer updates for longer work and avoid database calls before acknowledging the interaction.</p></section>
+<section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5"><h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2><p class="mt-2 text-pink-900"><a href="discord-interactions.html">Interactions</a> - <a href="discord-collectors.html">Collectors</a> - <a href="discord-modals.html">Modals</a></p></section>
+</main></div></body></html>

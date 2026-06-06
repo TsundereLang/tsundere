@@ -29,6 +29,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const links = [
       ["language.html", "Language"],
+      ["book/index.html", "Complete Docs"],
       ["templates.html", "Templates"],
       ["examples.html", "Examples"],
       ["transition.html", "Transition"],
@@ -79,6 +80,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
   document.body.appendChild(button);
+
+  setupBookDocs();
 });
 
 function addAuthor() {
@@ -101,7 +104,15 @@ function addDiscordDropdown(nav) {
     return;
   }
   const current = location.pathname.split("/").pop();
-  const isDiscordPage = current === "discord.html" || current === "discord-events.html" || current === "discord-layouts.html";
+  const isDiscordPage = current === "discord.html"
+    || current === "discord-events.html"
+    || current === "discord-layouts.html"
+    || current === "discord-commands.html"
+    || current === "discord-components.html"
+    || current === "discord-embeds.html"
+    || current === "discord-modals.html"
+    || current === "discord-collectors.html"
+    || current === "discord-interactions.html";
   const details = document.createElement("details");
   details.className = isDiscordPage ? "docs-dropdown active" : "docs-dropdown";
   details.open = isDiscordPage;
@@ -110,6 +121,12 @@ function addDiscordDropdown(nav) {
     <a href="discord.html" class="${current === "discord.html" ? "active" : ""}">Overview</a>
     <a href="discord-events.html" class="${current === "discord-events.html" ? "active" : ""}">Events</a>
     <a href="discord-layouts.html" class="${current === "discord-layouts.html" ? "active" : ""}">Layouts</a>
+    <a href="discord-commands.html" class="${current === "discord-commands.html" ? "active" : ""}">Commands</a>
+    <a href="discord-interactions.html" class="${current === "discord-interactions.html" ? "active" : ""}">Interactions</a>
+    <a href="discord-components.html" class="${current === "discord-components.html" ? "active" : ""}">Components</a>
+    <a href="discord-embeds.html" class="${current === "discord-embeds.html" ? "active" : ""}">Embeds</a>
+    <a href="discord-modals.html" class="${current === "discord-modals.html" ? "active" : ""}">Modals</a>
+    <a href="discord-collectors.html" class="${current === "discord-collectors.html" ? "active" : ""}">Collectors</a>
   `;
   const discordLink = nav.querySelector('a[href="discord.html"]');
   discordLink?.replaceWith(details);
@@ -176,6 +193,11 @@ const docsIndex = [
     text: "Language fundamentals explain .yuri files, TypeScript style syntax, variables, const, let, type aliases, async functions, modules, imports, npm packages, local runtime imports, Discord native layouts, commands folder, events folder, services folder, typed components, custom IDs, common mistakes, intent warnings, secrets, and performance notes."
   },
   {
+    href: "book/index.html",
+    title: "Complete Documentation",
+    text: "Complete generated Tsundere documentation book with 314 pages covering getting started, Yuri language, CLI commands, compiler, Discord basics, events, commands, components, objects, scaling, observability, tooling, testing, deployment, examples, and contributor workflows."
+  },
+  {
     href: "discord.html",
     title: "Discord Guide",
     text: "Discord guide covers Client setup, Intents, Guilds, GuildMessages, MessageContent, slash commands, interactions, buttons, selects, modals, embeds, Component.define, typed component data, command discovery config, route based commands, event layouts, and Discord diagnostics for custom IDs and embed limits."
@@ -194,6 +216,36 @@ const docsIndex = [
     href: "cli.html",
     title: "CLI and Runtime",
     text: "CLI commands include tsundere create, install, update package, dev, build, start, version, updater, commands sync, types sync, docs, runtime install, lint, format, test, doctor, plugin install, store path, store prune, and cache clean. Runtime flow compiles .yuri into build and emits runnable JavaScript into .tsundere/runtime-build. tsundere start runs main.js through Node. tsundere dev watches and restarts."
+  },
+  {
+    href: "discord-commands.html",
+    title: "Discord Commands",
+    text: "Discord commands documentation covers slash commands, options, command groups, subcommands, route based commands, permissions, validation, autocomplete, context menus, guild sync, global sync, stale command cleanup, common mistakes, and performance notes."
+  },
+  {
+    href: "discord-interactions.html",
+    title: "Discord Interactions",
+    text: "Discord interactions documentation covers interactionCreate, reply, deferReply, editReply, followUp, deleteReply, isCommand, isButton, isModal, isSelectMenu, customId, commandName, type narrowing, routers, timing, troubleshooting, and metrics."
+  },
+  {
+    href: "discord-components.html",
+    title: "Discord Components",
+    text: "Discord components documentation covers buttons, button styles, select menus, action rows, typed custom IDs, component rows, component collectors, modal collectors, timeout handling, new component layouts, containers, sections, text displays, thumbnails, and media galleries."
+  },
+  {
+    href: "discord-embeds.html",
+    title: "Discord Embeds",
+    text: "Discord embeds documentation covers Embed builder usage, titles, descriptions, fields, footer, author, thumbnail, image, timestamps, color, validation, Discord limits, command output, logs, dashboards, mistakes, and performance notes."
+  },
+  {
+    href: "discord-modals.html",
+    title: "Discord Modals",
+    text: "Discord modals documentation covers modal creation, text inputs, typed modal data, modal schemas, custom IDs, validation, submissions, handling, privacy, troubleshooting, and performance notes."
+  },
+  {
+    href: "discord-collectors.html",
+    title: "Discord Collectors",
+    text: "Discord collectors documentation covers component collectors, modal collectors, message collectors, filters, timeout handling, collect events, end events, stale UI cleanup, private confirmations, memory safety, and troubleshooting."
   },
   {
     href: "compiler.html",
@@ -343,4 +395,55 @@ function snippet(text, terms) {
   const prefix = start > 0 ? "..." : "";
   const suffix = end < text.length ? "..." : "";
   return `${prefix}${text.slice(start, end).trim()}${suffix}`;
+}
+
+function setupBookDocs() {
+  if (!window.TSUNDERE_BOOK) {
+    return;
+  }
+
+  const nav = document.querySelector("#book-nav");
+  const current = location.pathname.split("/").pop();
+  if (nav) {
+    nav.innerHTML = window.TSUNDERE_BOOK.groups.map((group) => {
+      const pages = window.TSUNDERE_BOOK.pages.filter((page) => page.groupSlug === group.slug);
+      const open = pages.some((page) => `${page.slug}.html` === current) || current === "index.html";
+      return `
+        <details class="docs-dropdown book-group" ${open ? "open" : ""}>
+          <summary>${group.title}</summary>
+          ${pages.map((page) => `<a href="${page.slug}.html" class="${`${page.slug}.html` === current ? "active" : ""}">${page.title}</a>`).join("")}
+        </details>
+      `;
+    }).join("");
+  }
+
+  const input = document.querySelector("#book-search-input");
+  const results = document.querySelector("#book-search-results");
+  if (input && results) {
+    input.addEventListener("input", () => {
+      const query = input.value.trim().toLowerCase();
+      if (!query) {
+        results.innerHTML = "";
+        results.classList.remove("open");
+        return;
+      }
+      const terms = query.split(/\s+/u).filter(Boolean);
+      const matches = window.TSUNDERE_BOOK.pages
+        .map((page) => ({
+          page,
+          score: terms.reduce((score, term) => {
+            const title = page.title.toLowerCase();
+            const group = page.group.toLowerCase();
+            return score + (title.includes(term) ? 10 : 0) + (group.includes(term) ? 4 : 0);
+          }, 0)
+        }))
+        .filter((match) => match.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+      results.innerHTML = matches
+        .map(({ page }) => `<a href="${page.slug}.html"><strong>${page.title}</strong><span>${page.group}</span></a>`)
+        .join("");
+      results.classList.toggle("open", matches.length > 0);
+    });
+  }
 }

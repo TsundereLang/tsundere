@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Typed Objects - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../theme.css">
+  <script src="../theme.js" defer></script>
+  <script src="book-data.js" defer></script>
+</head>
+<body class="bg-white text-slate-900 docs-book" data-doc-title="Typed Objects" data-doc-group="Discord Basics" data-doc-author="Luckyz">
+  <div class="min-h-screen lg:grid lg:grid-cols-[320px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+      <div class="flex items-center gap-3">
+        <img src="../../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Documentation</div></div>
+      </div>
+      <div class="docs-search">
+        <i data-lucide="search" class="search-icon"></i>
+        <input id="book-search-input" type="search" placeholder="Search 200+ docs">
+        <div id="book-search-results" class="search-results"></div>
+      </div>
+      <nav id="book-nav" class="mt-6 space-y-1 text-sm"></nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <article class="doc-page">
+        <p class="eyebrow">Discord Basics</p>
+        <h1>Typed Objects</h1>
+        <div class="doc-author"><img src="https://cdn.discordapp.com/avatars/1212798448525512785/3939e4e22234f3e7ce8247988ad43d3d.webp?size=1536" alt="Luckyz"><span>Written by <strong>Luckyz</strong></span></div>
+        <section class="doc-section"><h2>Overview</h2><p>Typed Objects is part of the Discord Basics area of Tsundere. This page explains the practical behavior, why it matters, and how it fits into a production-focused .yuri project.</p></section>
+        <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use this topic when building Discord bots that need predictable API behavior, strong editor help, and fewer runtime surprises. It keeps the Discord API visible while documenting the workflow Tsundere expects.</p></section>
+        <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. Typed Objects should remain compatible with npm packages and should not require hidden framework magic.</p></section>
+        <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents } from &quot;@tsundere/discord&quot;
+
+const client = new Client({
+  token: env.DISCORD_TOKEN,
+  intents: [Intents.Guilds]
+})
+
+client.login()</code></pre></section>
+        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on(&quot;interactionCreate&quot;, async (interaction) =&gt; {
+  if (interaction.isCommand(&quot;ping&quot;)) {
+    await interaction.deferReply({ ephemeral: true })
+    await interaction.editReply({ content: &quot;pong&quot; })
+  }
+})</code></pre></section>
+        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference details for Typed Objects should include accepted inputs, generated output, configuration keys, related CLI commands, diagnostics, and runtime behavior. Keep this page close to source examples and update it when APIs change.</p></section>
+        <section class="doc-section"><h2>Best Practices</h2><ul><li>Keep Typed Objects usage explicit and easy to test.</li><li>Prefer small modules with clear imports and exports.</li><li>Document project-specific configuration next to the code that uses it.</li><li>Use diagnostics, tests, and examples before deploying to production.</li></ul></section>
+        <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Skipping configuration validation before production.</li><li>Copying examples without replacing placeholder IDs, tokens, or paths.</li><li>Ignoring warnings that point to Discord intents, permissions, or runtime setup.</li><li>Mixing generated output with source files.</li></ul></section>
+        <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run `tsundere doctor` to inspect environment and project setup.</li><li>Run `tsundere build` and read the first compiler diagnostic before changing multiple files.</li><li>Check `.env`, `tsundere.config.json`, and local runtime package resolution.</li><li>Search the docs for Typed Objects and related terms.</li></ul></section>
+        <section class="doc-section related"><h2>Related Pages</h2><p><a href="discord-basics-client-setup.html">Client Setup</a> - <a href="discord-basics-login.html">Login</a> - <a href="discord-basics-intents.html">Intents</a> - <a href="getting-started-introduction.html">Introduction</a></p></section>
+      </article></main>
+  </div>
+</body>
+</html>

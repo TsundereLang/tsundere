@@ -229,6 +229,99 @@ html.dark .theme-toggle {
   font-weight: 650;
 }
 
+.docs-book main {
+  background:
+    linear-gradient(180deg, rgba(255, 122, 182, 0.06), transparent 20rem),
+    transparent;
+}
+
+.book-hero {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 2rem;
+}
+
+.book-hero h1,
+.doc-page h1 {
+  max-width: 880px;
+  font-size: clamp(2.4rem, 6vw, 4.5rem);
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.eyebrow {
+  color: #be185d;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.book-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  padding: 1.2rem;
+}
+
+.book-card h2 {
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.book-card p {
+  margin-top: 0.5rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.book-card a {
+  display: inline-block;
+  margin-top: 0.8rem;
+  color: #be185d;
+  font-weight: 700;
+}
+
+.doc-section {
+  margin-top: 2.5rem;
+}
+
+.doc-section h2 {
+  font-size: 1.45rem;
+  font-weight: 760;
+}
+
+.doc-section p,
+.doc-section li {
+  margin-top: 0.75rem;
+  color: #475569;
+  line-height: 1.8;
+}
+
+.doc-section ul {
+  margin-top: 0.75rem;
+  padding-left: 1.35rem;
+  list-style: disc;
+}
+
+.doc-section.related {
+  border: 1px solid #f9a8d4;
+  border-radius: 0.5rem;
+  background: #fdf2f8;
+  padding: 1.1rem;
+}
+
+.book-group a {
+  font-size: 0.8rem;
+}
+
 html.dark .docs-search input,
 html.dark .search-results {
   border-color: #334155;
@@ -259,6 +352,26 @@ html.dark .docs-dropdown a.active {
 
 html.dark .doc-author {
   color: #94a3b8;
+}
+
+html.dark .book-hero {
+  border-color: #1e293b;
+}
+
+html.dark .book-card {
+  border-color: #1e293b;
+  background: #0f172a;
+}
+
+html.dark .book-card p,
+html.dark .doc-section p,
+html.dark .doc-section li {
+  color: #cbd5e1;
+}
+
+html.dark .doc-section.related {
+  border-color: #831843;
+  background: #3b0a25;
 }
 
 @media (prefers-color-scheme: dark) {

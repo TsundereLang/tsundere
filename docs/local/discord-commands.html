@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Discord Commands - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="discord-commands.html">Commands</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">Discord Commands</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Commands are the primary interaction surface for modern Discord bots. Tsundere keeps command definitions close to source files and reduces deploy-script boilerplate without becoming a command framework.</p>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="mt-3 text-slate-700">A command file exports metadata that can be discovered, validated, synced, and handled by your bot. Tsundere supports slash command builders, options, subcommands, groups, permissions, guild-only commands, autocomplete metadata, and route-based discovery.</p>
+      </section>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">Why It Exists</h2>
+        <p class="mt-3 text-slate-700">Discord command setup usually repeats the same work: define commands, register them, map interactions to handlers, parse options, and keep stale commands cleaned up. Tsundere turns those steps into an understandable project convention.</p>
+      </section>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">When To Use It</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Use slash commands for user-facing actions.</li>
+          <li>Use subcommands when one feature has several related actions.</li>
+          <li>Use route-based discovery when folders naturally map to command groups.</li>
+          <li>Use manual names when file layout should not affect public command names.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">Basic Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Slash } from "@tsundere/discord"
+
+export default Slash.command("ping")
+  .description("Check bot latency")</code></pre>
+      </section>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">Options Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>export default Slash.command("ban")
+  .description("Ban a member")
+  .option("user", "target", "Member to ban", { required: true })
+  .option("string", "reason", "Reason for the ban", { required: false })
+  .permission("BanMembers")
+  .guildOnly()</code></pre>
+      </section>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">Advanced Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
+  "commands": {
+    "discovery": true,
+    "routeBased": false,
+    "directory": "./src/commands",
+    "groups": {
+      "./src/commands/admin": {
+        "routeBased": true,
+        "groupName": "admin"
+      }
+    }
+  }
+}</code></pre>
+        <p class="mt-4 text-slate-600">With this config, `src/commands/admin/ban.yuri` can become `/admin ban` while other folders still use exported command names.</p>
+      </section>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Registering each command with a bulk PUT route one at a time, which overwrites previous commands.</li>
+          <li>Using global sync while expecting instant development updates.</li>
+          <li>Forgetting `dmPermission(false)` or `guildOnly()` for guild-only moderation commands.</li>
+          <li>Using permission names that do not map to Discord permission bit values.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10"><h2 class="text-2xl font-semibold">Performance Notes</h2>
+        <p class="mt-3 text-slate-700">Sync commands only when metadata changes. Prefer guild sync during development. Keep command handlers small and push database/API work into services.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
+        <p class="mt-2 text-pink-900"><a href="discord-layouts.html">Layouts</a> - <a href="discord-interactions.html">Interactions</a> - <a href="compiler.html">Compiler</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
