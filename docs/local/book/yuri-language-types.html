@@ -29,26 +29,20 @@
         <h1>Types</h1>
         <div class="doc-author"><img src="https://cdn.discordapp.com/avatars/1212798448525512785/3939e4e22234f3e7ce8247988ad43d3d.webp?size=1536" alt="Luckyz"><span>Written by <strong>Luckyz</strong></span></div>
         <div class="doc-meta-grid"><div><span>Section</span><strong>Yuri Language</strong></div><div><span>Level</span><strong>Practical</strong></div><div><span>Primary Command</span><strong>tsundere doctor</strong></div><div><span>Production Focus</span><strong>Clear runtime behavior</strong></div></div>
-        <section class="doc-section"><h2>Overview</h2><p>Types is part of the Yuri Language area of Tsundere. This page explains practical behavior, production usage, and how the topic fits into a real .yuri project.</p></section>
-        <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use this topic when you need a reliable mental model for Tsundere projects. It connects beginner usage with production concerns like configuration, diagnostics, testing, and deployment.</p></section>
-        <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. Types should remain compatible with npm packages and should not require hidden framework magic.</p></section>
-        <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>// Types
-const enabled = true
-
-if (enabled) {
-  log(&quot;Tsundere is ready&quot;)
+        <section class="doc-section"><h2>Overview</h2><p>Types explains a core Yuri language feature. Types describe data contracts between commands, services, handlers, and npm packages. The feature should feel familiar to TypeScript developers while staying strict enough for Discord bot and backend projects.</p></section>
+        <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use Types when writing source code that needs to remain readable, type-aware, and compatible with generated JavaScript or TypeScript. This page shows the everyday pattern and the production pattern so examples do not stop at toy syntax.</p></section>
+        <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>Language architecture keeps Yuri close to TypeScript syntax, then lowers supported conveniences before emitting Node-compatible output. Public APIs should stay typed, internal helpers should stay small, and source maps should keep generated code traceable to `.yuri` files.</p></section>
+        <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>type UserProfile = {
+  id: string
+  points: number
 }</code></pre></section>
-        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>export async function runTypes(ctx) {
-  try {
-    await ctx.execute()
-  } catch err {
-    log(&quot;Failed: &quot; + err.message)
-  }
-}</code></pre></section>
-        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference details for Types should include accepted inputs, generated output, configuration keys, related CLI commands, diagnostics, and runtime behavior. Keep this page close to source examples and update it when APIs change.</p></section>
-        <section class="doc-section"><h2>Best Practices</h2><ul><li>Keep Types usage explicit and easy to test.</li><li>Prefer small modules with clear imports and exports.</li><li>Document project-specific configuration next to the code that uses it.</li><li>Use diagnostics, tests, and examples before deploying to production.</li></ul></section>
-        <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Skipping configuration validation before production.</li><li>Copying examples without replacing placeholder IDs, tokens, or paths.</li><li>Ignoring warnings that point to Discord intents, permissions, or runtime setup.</li><li>Mixing generated output with source files.</li></ul></section>
-        <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run `tsundere doctor` to inspect environment and project setup.</li><li>Run `tsundere build` and read the first compiler diagnostic before changing multiple files.</li><li>Check `.env`, `tsundere.config.json`, and local runtime package resolution.</li><li>Search the docs for Types and related terms.</li></ul></section>
+        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>type Result&lt;T&gt; =
+  | { ok: true, value: T }
+  | { ok: false, error: string }</code></pre></section>
+        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference notes: Yuri accepts TypeScript-style code for this topic, emits Node-compatible JavaScript or TypeScript, and keeps npm package interop intact. Prefer explicit annotations for exported functions, command handlers, service boundaries, and values read from Discord or environment variables.</p></section>
+        <section class="doc-section"><h2>Best Practices</h2><ul><li>Keep exported APIs typed even when local variables can use inference.</li><li>Prefer small service functions over large event callbacks.</li><li>Use normal npm imports and avoid importing generated runtime files directly.</li><li>Run formatter, linter, and build checks before publishing examples.</li></ul></section>
+        <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Using `any` instead of modeling the actual Discord or service type.</li><li>Editing generated JavaScript instead of the source `.yuri` file.</li><li>Assuming Discord partial objects always include every property.</li><li>Mixing hidden framework assumptions into examples meant to be plain Yuri.</li></ul></section>
+        <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run `tsundere build` and inspect the generated diagnostic line number.</li><li>Check whether the code uses a supported Yuri convenience or plain TypeScript-style syntax.</li><li>Search generated output only for debugging; make fixes in `.yuri` source.</li><li>If editor help looks stale, restart YuriLS or run `tsundere types sync` for Discord metadata.</li></ul></section>
         <section class="doc-section related"><h2>Related Pages</h2><p><a href="yuri-language-syntax.html">Syntax</a> - <a href="yuri-language-variables.html">Variables</a> - <a href="yuri-language-constants.html">Constants</a> - <a href="getting-started-introduction.html">Introduction</a></p></section>
         <nav class="page-neighbors"><a href="yuri-language-constants.html"><span>Previous</span><strong>Constants</strong></a><a href="yuri-language-objects.html"><span>Next</span><strong>Objects</strong></a></nav>
       </article></main>

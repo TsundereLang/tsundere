@@ -29,26 +29,23 @@
         <h1>Stress Tests</h1>
         <div class="doc-author"><img src="https://cdn.discordapp.com/avatars/1212798448525512785/3939e4e22234f3e7ce8247988ad43d3d.webp?size=1536" alt="Luckyz"><span>Written by <strong>Luckyz</strong></span></div>
         <div class="doc-meta-grid"><div><span>Section</span><strong>Testing</strong></div><div><span>Level</span><strong>Practical</strong></div><div><span>Primary Command</span><strong>tsundere doctor</strong></div><div><span>Production Focus</span><strong>Reliable CI feedback</strong></div></div>
-        <section class="doc-section"><h2>Overview</h2><p>Stress Tests is part of the Testing area of Tsundere. This page explains practical behavior, production usage, and how the topic fits into a real .yuri project.</p></section>
-        <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use this topic when you need a reliable mental model for Tsundere projects. It connects beginner usage with production concerns like configuration, diagnostics, testing, and deployment.</p></section>
-        <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. Stress Tests should remain compatible with npm packages and should not require hidden framework magic.</p></section>
-        <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>// Stress Tests
-const enabled = true
+        <section class="doc-section"><h2>Overview</h2><p>Stress Tests covers watch mode, cache, and high-event flows in a Tsundere project. The goal is to test source behavior, generated output, and Discord interactions before a bot reaches production.</p></section>
+        <section class="doc-section"><h2>Purpose And Use Cases</h2><p>Use this page to decide what to test, where to keep fixtures, and how to keep command handlers testable without connecting to Discord. It is especially useful before changing compiler behavior, command discovery, package installs, or interaction handlers.</p></section>
+        <section class="doc-section"><h2>Architecture Or Design Notes</h2><p>Testing architecture separates pure services from gateway/runtime wiring. Source tests can call services directly, runtime tests can inspect generated output, and integration tests can mock Discord interactions without requiring a live bot token.</p></section>
+        <section class="doc-section"><h2>Beginner Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>for (let i = 0; i &lt; 1000; i += 1) {
+  await router.dispatch(mockInteraction(&quot;ping&quot;))
+}</code></pre></section>
+        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>for (let i = 0; i &lt; 1000; i += 1) {
+  await router.dispatch(mockInteraction(&quot;ping&quot;))
+}
 
-if (enabled) {
-  log(&quot;Tsundere is ready&quot;)
-}</code></pre></section>
-        <section class="doc-section"><h2>Advanced Example</h2><pre class="overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>export async function runStressTests(ctx) {
-  try {
-    await ctx.execute()
-  } catch err {
-    log(&quot;Failed: &quot; + err.message)
-  }
-}</code></pre></section>
-        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference details for Stress Tests should include accepted inputs, generated output, configuration keys, related CLI commands, diagnostics, and runtime behavior. Keep this page close to source examples and update it when APIs change.</p></section>
-        <section class="doc-section"><h2>Best Practices</h2><ul><li>Keep Stress Tests usage explicit and easy to test.</li><li>Prefer small modules with clear imports and exports.</li><li>Document project-specific configuration next to the code that uses it.</li><li>Use diagnostics, tests, and examples before deploying to production.</li></ul></section>
-        <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Skipping configuration validation before production.</li><li>Copying examples without replacing placeholder IDs, tokens, or paths.</li><li>Ignoring warnings that point to Discord intents, permissions, or runtime setup.</li><li>Mixing generated output with source files.</li></ul></section>
-        <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run `tsundere doctor` to inspect environment and project setup.</li><li>Run `tsundere build` and read the first compiler diagnostic before changing multiple files.</li><li>Check `.env`, `tsundere.config.json`, and local runtime package resolution.</li><li>Search the docs for Stress Tests and related terms.</li></ul></section>
+# CI gate
+npm run build
+npm test</code></pre></section>
+        <section class="doc-section"><h2>Reference And API Details</h2><p>Reference notes: keep fixtures under `tests/fixtures`, run `npm test` or `tsundere test`, and cover both source behavior and generated runtime behavior when compiler or CLI code changes. Mock Discord objects rather than calling the live API in normal unit tests.</p></section>
+        <section class="doc-section"><h2>Best Practices</h2><ul><li>Test pure services before testing gateway wiring.</li><li>Use mock interactions and mock REST clients instead of live Discord calls.</li><li>Keep fixtures small and name them after the behavior they prove.</li><li>Run tests after regenerating docs, runtime output, or command metadata.</li></ul></section>
+        <section class="doc-section"><h2>Common Mistakes</h2><ul><li>Only testing generated output while leaving source helpers untested.</li><li>Calling the live Discord API from unit tests.</li><li>Skipping negative cases such as missing options, missing intents, or failed replies.</li><li>Letting snapshots hide behavior changes without reviewing the diff.</li></ul></section>
+        <section class="doc-section"><h2>Troubleshooting</h2><ul><li>Run the narrow test first, then the full suite.</li><li>If a fixture fails after compiler changes, inspect both source and generated output.</li><li>If mocks fail, compare them to the current @tsundere/discord runtime type shape.</li><li>Use `tsundere doctor` when package or runtime resolution breaks tests.</li></ul></section>
         <section class="doc-section related"><h2>Related Pages</h2><p><a href="testing-testing-overview.html">Testing Overview</a> - <a href="testing-unit-tests.html">Unit Tests</a> - <a href="testing-runtime-tests.html">Runtime Tests</a> - <a href="getting-started-introduction.html">Introduction</a></p></section>
         <nav class="page-neighbors"><a href="testing-discord-tests.html"><span>Previous</span><strong>Discord Tests</strong></a><a href="testing-snapshot-tests.html"><span>Next</span><strong>Snapshot Tests</strong></a></nav>
       </article></main>

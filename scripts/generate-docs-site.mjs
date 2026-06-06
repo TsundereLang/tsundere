@@ -130,6 +130,79 @@ const componentDetails = {
   "Typed Custom IDs": "Typed custom IDs replace manual string splitting with compact serialized data."
 };
 
+const languageDetails = {
+  Syntax: { idea: "Yuri keeps TypeScript-style syntax with a small set of compiler conveniences.", beginner: "const name: string = \"Yuri\"\nlog(`Hello ${name}`)", advanced: "export type CommandResult = {\n  ok: boolean\n  latency?: number\n}\n\nexport function result(ok: boolean): CommandResult {\n  return { ok }\n}" },
+  Variables: { idea: "Use `let` for values that change and `const` for values that should stay fixed.", beginner: "let count = 0\ncount += 1\n\nconst botName = \"Tsundere\"", advanced: "let currentShard: number | null = null\n\nif (currentShard == null) {\n  currentShard = 0\n}" },
+  Constants: { idea: "Constants document stable runtime choices such as colors, paths, command names, and limits.", beginner: "const THEME_COLOR = \"#ff7ab6\"\nconst COMMAND_NAME = \"ping\"", advanced: "export const limits = {\n  customId: 100,\n  embedTitle: 256,\n  embedDescription: 4096\n}" },
+  Types: { idea: "Types describe data contracts between commands, services, handlers, and npm packages.", beginner: "type UserProfile = {\n  id: string\n  points: number\n}", advanced: "type Result<T> =\n  | { ok: true, value: T }\n  | { ok: false, error: string }" },
+  Objects: { idea: "Objects are plain JavaScript-compatible records with stricter editor help.", beginner: "const reply = {\n  content: \"Pong\",\n  ephemeral: true\n}", advanced: "const config = {\n  commands: { discovery: true, routeBased: false },\n  runtime: { sourceMaps: true }\n}" },
+  Arrays: { idea: "Arrays are used for intents, embeds, components, command options, and ordinary lists.", beginner: "const intents = [Intents.Guilds, Intents.GuildMessages]", advanced: "const visible = members\n  .filter((member) => !member.user.bot)\n  .map((member) => member.user.tag)" },
+  Functions: { idea: "Functions keep handlers small and make Discord behavior testable outside the gateway.", beginner: "export function formatPing(latency: number): string {\n  return `Pong: ${latency}ms`\n}", advanced: "export async function replyWithLatency(interaction, client) {\n  await interaction.reply({ content: formatPing(client.ping), ephemeral: true })\n}" },
+  "Async Await": { idea: "Use async/await for Discord API calls, database reads, REST helpers, and command replies.", beginner: "client.on(\"ready\", async () => {\n  await syncCommands(client)\n})", advanced: "try {\n  await interaction.deferReply({ ephemeral: true })\n  const profile = await profiles.find(interaction.user.id)\n  await interaction.editReply({ content: profile.name })\n} catch err {\n  await interaction.editReply({ content: \"Could not load profile\" })\n}" },
+  Imports: { idea: "Imports are normal ESM imports so npm packages and local modules work naturally.", beginner: "import { Client, Intents } from \"@tsundere/discord\"\nimport axios from \"axios\"", advanced: "import { createLogger } from \"@tsundere/logger\"\nimport { syncContributorRoles } from \"./services/roles\"" },
+  Exports: { idea: "Exports make command files, services, and testable helpers reusable.", beginner: "export const commandName = \"ping\"", advanced: "export default Slash.command(\"ping\")\n  .description(\"Check bot latency\")" },
+  Modules: { idea: "Modules are normal files. Keep `main.yuri` small and move behavior into services.", beginner: "import { registerEvents } from \"./events\"\nregisterEvents(client)", advanced: "export function registerEvents(client) {\n  client.on(\"interactionCreate\", handleInteraction)\n}" },
+  Classes: { idea: "Classes are useful for stateful services, caches, and adapters.", beginner: "class Counter {\n  value = 0\n  inc() { this.value += 1 }\n}", advanced: "export class WarningStore {\n  constructor(private path: string) {}\n  async add(userId: string, reason: string) { /* save warning */ }\n}" },
+  Interfaces: { idea: "Interfaces describe shapes consumed by services and plugin APIs.", beginner: "interface Logger {\n  info(message: string): void\n}", advanced: "interface CommandContext {\n  userId: string\n  reply(payload: unknown): Promise<void>\n}" },
+  Generics: { idea: "Generics keep reusable helpers typed without falling back to `any`.", beginner: "function first<T>(items: T[]): T | undefined {\n  return items[0]\n}", advanced: "type CacheEntry<T> = { value: T, expiresAt: number }\nclass Cache<T> {\n  private entries = new Map<string, CacheEntry<T>>()\n}" },
+  Enums: { idea: "Enums work for stable option sets, but string unions are often better for public data.", beginner: "enum Mode {\n  Dev,\n  Prod\n}", advanced: "type LogLevel = \"debug\" | \"info\" | \"warn\" | \"error\"" },
+  "Type Inference": { idea: "Let Tsundere infer obvious types while annotating public APIs and Discord boundaries.", beginner: "const latency = client.ping\nconst name = interaction.commandName", advanced: "export function createReply(content: string) {\n  return { content, ephemeral: true }\n}" },
+  "Union Types": { idea: "Union types model Discord states, command results, and optional workflows safely.", beginner: "type CommandState = \"ready\" | \"disabled\" | \"syncing\"", advanced: "type LoadResult = { ok: true, user: User } | { ok: false, reason: string }" },
+  "Optional Values": { idea: "Use optional fields for values Discord may omit, especially partial objects.", beginner: "type CachedMessage = {\n  content?: string\n}", advanced: "const content = message.content ?? \"No cached content\"" },
+  "Null Safety": { idea: "Check nullable values before using them and prefer fallbacks where sensible.", beginner: "const guild = interaction.guild\nif (!guild) return", advanced: "const member = interaction.member ?? await interaction.guild.members.fetch(interaction.user.id)" },
+  "Error Handling": { idea: "Handle expected failures near Discord API calls and keep user replies graceful.", beginner: "try {\n  await interaction.reply({ content: \"Done\" })\n} catch err {\n  log(err.message)\n}", advanced: "await interaction.deferReply({ ephemeral: true })\ntry {\n  await service.run()\n  await interaction.editReply({ content: \"Complete\" })\n} catch err {\n  await interaction.editReply({ content: \"Failed safely\" })\n}" },
+  Comments: { idea: "Use comments to explain intent, edge cases, and Discord constraints, not obvious statements.", beginner: "// Keep this synced with Discord's custom ID limit.\nconst MAX_CUSTOM_ID = 100", advanced: "// Discord may emit partial messages for uncached deletes.\nconst author = message.author?.tag ?? \"Unknown\"" },
+  Formatting: { idea: "Formatting keeps .yuri code predictable for humans, the compiler, and AI tools.", beginner: "tsundere format", advanced: "tsundere format && tsundere lint && tsundere build" },
+  "JS TS Interop": { idea: "Yuri targets Node-compatible JS/TS, so existing libraries import normally.", beginner: "import express from \"express\"\nimport mysql from \"mysql2\"", advanced: "import type { RowDataPacket } from \"mysql2\"\n\nexport async function query<T extends RowDataPacket>(sql: string): Promise<T[]> {\n  return db.query(sql)\n}" },
+  "Source Maps": { idea: "Source maps connect generated JS/TS back to .yuri files for debugging.", beginner: "tsundere build\n# read stack traces against .yuri locations when source maps are enabled", advanced: "export default {\n  sourceMaps: true,\n  outDir: \"build\"\n}" },
+  "Runtime Globals": { idea: "`env`, `log`, and `print` are convenience globals lowered by the compiler.", beginner: "log(`Starting ${env.BOT_NAME}`)", advanced: "const token = env.DISCORD_TOKEN\nif (!token) throw new Error(\"Missing DISCORD_TOKEN\")" }
+};
+
+const testingDetails = {
+  "Testing Overview": { focus: "the overall test strategy", example: "npm test\nnpm run build\nnode --test tests/*.test.mjs" },
+  "Unit Tests": { focus: "small functions and services", example: "import test from \"node:test\"\nimport assert from \"node:assert/strict\"\nimport { formatPing } from \"../build/services/ping.js\"\n\ntest(\"formats latency\", () => {\n  assert.equal(formatPing(42), \"Pong: 42ms\")\n})" },
+  "Runtime Tests": { focus: "compiled runtime behavior", example: "tsundere build\nnode --test tests/runtime.test.mjs" },
+  "Compiler Tests": { focus: "Yuri syntax lowering and diagnostics", example: "const result = compileYuri({ source, filename: \"main.yuri\", strict: true })\nassert.match(result.code, /client\\.on/)" },
+  "CLI Tests": { focus: "terminal commands and exit codes", example: "const result = await runCli([\"build\"], fixtureDir)\nassert.equal(result.code, 0)" },
+  "Package Manager Tests": { focus: "install, cache, lock, and store behavior", example: "await cli(\"install\", fixture)\nassert.ok(existsSync(join(fixture, \"tsundere-lock.yaml\")))" },
+  "Discord Tests": { focus: "interactions without connecting to Discord", example: "const interaction = mockCommand(\"ping\")\nawait handler(interaction)\nassert.equal(interaction.replies[0].content, \"pong\")" },
+  "Stress Tests": { focus: "watch mode, cache, and high-event flows", example: "for (let i = 0; i < 1000; i += 1) {\n  await router.dispatch(mockInteraction(\"ping\"))\n}" },
+  "Snapshot Tests": { focus: "generated command payloads and docs output", example: "assert.deepEqual(command.toJSON(), readSnapshot(\"ping-command.json\"))" },
+  "Writing Testable Code": { focus: "small services and dependency injection", example: "export function createPingHandler({ clock }) {\n  return async (ctx) => ctx.reply(`pong ${clock.now()}`)\n}" }
+};
+
+const deploymentDetails = {
+  "Deployment Overview": { focus: "release flow", beginner: "tsundere install\ntsundere build\ntsundere start", advanced: "tsundere doctor\nnpm test\ntsundere build --source-maps=false\nTSUNDERE_ENV=production tsundere start" },
+  "Build Artifacts": { focus: "what build creates", beginner: "tsundere build\nls build\nls .tsundere/runtime-build", advanced: "tar -czf app.tar.gz build .tsundere/runtime-build package.json tsundere.config.json" },
+  "Environment Variables": { focus: "safe runtime config", beginner: "DISCORD_TOKEN=...\nDISCORD_GUILD_ID=...", advanced: "if (!env.DISCORD_TOKEN) {\n  throw new Error(\"Missing DISCORD_TOKEN\")\n}" },
+  "Windows Deployment": { focus: "Windows hosts", beginner: "tsundere install\ntsundere build\ntsundere start", advanced: "powershell -ExecutionPolicy Bypass -File install-tsundere-windows.ps1" },
+  "Linux Deployment": { focus: "Linux servers", beginner: "chmod +x install-tsundere-linux.sh\n./install-tsundere-linux.sh", advanced: "sudo systemctl restart tsundere-bot\njournalctl -u tsundere-bot -f" },
+  Docker: { focus: "container images", beginner: "FROM node:24-slim\nWORKDIR /app\nCOPY . .\nRUN npm ci && npm run build\nCMD [\"node\", \"dist/cli.js\", \"start\"]", advanced: "docker build -t tsundere-bot .\ndocker run --env-file .env tsundere-bot" },
+  "CI CD": { focus: "automated checks", beginner: "npm ci\nnpm run build\nnpm test", advanced: "tsundere install --frozen-lockfile\ntsundere build\nnpm run test:unit" },
+  "GitHub Actions": { focus: "GitHub workflow", beginner: "name: build\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest", advanced: "steps:\n  - uses: actions/checkout@v4\n  - uses: actions/setup-node@v4\n    with:\n      node-version: 24\n  - run: npm ci\n  - run: npm run build\n  - run: npm test" },
+  "Production Configuration": { focus: "prod config", beginner: "COMMANDS_GLOBAL=true\nLOG_LEVEL=info", advanced: "const isProd = env.NODE_ENV == \"production\"\nconst sourceMaps = !isProd" },
+  Secrets: { focus: "private tokens", beginner: "DISCORD_TOKEN=never-commit-this", advanced: "Use host secrets, GitHub Actions secrets, or deployment platform env vars instead of checked-in files." },
+  "Runtime Install": { focus: "local runtime package", beginner: "tsundere runtime install\ntsundere install", advanced: "Run runtime install after updating Tsundere so @tsundere/discord points at the bundled runtime." },
+  Systemd: { focus: "Linux service manager", beginner: "systemctl status tsundere-bot", advanced: "[Service]\nWorkingDirectory=/srv/tsundere-bot\nExecStart=/usr/bin/tsundere start\nRestart=always" },
+  "Process Managers": { focus: "keeping the app alive", beginner: "pm2 start \"tsundere start\" --name tsundere-bot", advanced: "pm2 save\npm2 logs tsundere-bot" },
+  "Health Checks": { focus: "runtime readiness", beginner: "GET /health\n200 OK", advanced: "server.get(\"/health\", () => ({ ok: true, uptime: process.uptime() }))" },
+  Rollbacks: { focus: "safe recovery", beginner: "git checkout previous-release\ntsundere install\ntsundere build\ntsundere start", advanced: "Keep the previous artifact and switch process manager targets only after health checks pass." },
+  Troubleshooting: { focus: "fixing deployment failures", beginner: "tsundere doctor\ntsundere build", advanced: "Check env vars, command sync scope, runtime package resolution, and Discord privileged intents before redeploying." }
+};
+
+const exampleDetails = {
+  "Empty Project": { template: "empty", structure: "src/main.yuri, tsundere.config.json, package.json", beginner: "tsundere create scratch --template empty\ncd scratch\ntsundere dev", advanced: "Add one service at a time and keep generated output out of source control." },
+  "CLI App": { template: "cli", structure: "src/main.yuri, src/commands, src/services", beginner: "tsundere create tools --template cli\ncd tools\ntsundere dev", advanced: "Parse arguments in a small service and test it without running the CLI process." },
+  "Web Server": { template: "rest", structure: "src/main.yuri, src/routes, src/services", beginner: "import express from \"express\"\nconst app = express()\napp.get(\"/\", (req, res) => res.send(\"Hello\"))", advanced: "Keep route handlers thin and move database/API work into services." },
+  "Yuri Backend With EJS": { template: "rest", structure: "src/views, src/routes, src/services", beginner: "app.set(\"view engine\", \"ejs\")\napp.get(\"/\", (req, res) => res.render(\"index\"))", advanced: "Precompile assets separately and keep templates outside generated runtime folders." },
+  "Discord Bot": { template: "discord", structure: "src/main.yuri, src/commands, src/events, src/services", beginner: "tsundere create my-bot --template discord\ncd my-bot\ntsundere install\ntsundere dev", advanced: "Split command handlers, event handlers, and Discord services so interaction code stays small." },
+  "Slash Command Bot": { template: "discord", structure: "src/commands/*.yuri", beginner: "export default Slash.command(\"ping\")\n  .description(\"Check latency\")", advanced: "Use route-based command discovery for groups like src/commands/admin/ban.yuri -> /admin ban." },
+  "Components Bot": { template: "discord", structure: "src/components, src/services/interactions.yuri", beginner: "const button = Button.success(\"confirm\").label(\"Confirm\")", advanced: "Use typed custom IDs so component handlers receive parsed data instead of manual string splits." },
+  "Logger Example": { template: "empty", structure: "src/main.yuri, src/logger.yuri", beginner: "import { createLogger } from \"@tsundere/logger\"\nconst log = createLogger({ service: \"bot\" })", advanced: "Use JSON logs in production and redact tokens, secrets, and authorization headers." },
+  "Grafana Metrics Example": { template: "empty", structure: "src/metrics.yuri, dashboards", beginner: "import { createDefaultMetrics } from \"@tsundere/metrics\"\nconst metrics = createDefaultMetrics()", advanced: "Expose `/metrics` for Prometheus and build Grafana panels for command latency and gateway health." },
+  "Package Manager Example": { template: "empty", structure: "package.json, tsundere-lock.yaml, tsundere-workspace.yaml", beginner: "tsundere add mysql2 axios\ntsundere install", advanced: "Use store prune and cache clean in CI maintenance jobs when dependency state grows stale." }
+};
+
 const groups = [
   {
     title: "Getting Started",
@@ -411,6 +484,22 @@ function overview(page) {
   if (page.groupSlug === "discord-components" && componentDetails[page.title]) {
     return `${escapeHtml(page.title)} covers Discord component authoring in Tsundere. ${escapeHtml(componentDetails[page.title])} The goal is less manual payload wiring while keeping the Discord API shape visible.`;
   }
+  const language = languageDetails[page.title];
+  if (page.groupSlug === "yuri-language" && language) {
+    return `${escapeHtml(page.title)} explains a core Yuri language feature. ${escapeHtml(language.idea)} The feature should feel familiar to TypeScript developers while staying strict enough for Discord bot and backend projects.`;
+  }
+  const testing = testingDetails[page.title];
+  if (testing) {
+    return `${escapeHtml(page.title)} covers ${escapeHtml(testing.focus)} in a Tsundere project. The goal is to test source behavior, generated output, and Discord interactions before a bot reaches production.`;
+  }
+  const deploy = deploymentDetails[page.title];
+  if (deploy) {
+    return `${escapeHtml(page.title)} explains ${escapeHtml(deploy.focus)} for production Tsundere apps. It focuses on reproducible installs, clear runtime startup, environment safety, and recovery when deployment goes sideways.`;
+  }
+  const example = exampleDetails[page.title];
+  if (example) {
+    return `${escapeHtml(page.title)} is a practical starter example based on the \`${escapeHtml(example.template)}\` style. It explains the project shape, how to run it, and what to change before using it in production.`;
+  }
   if (page.groupSlug === "deployment") {
     return `${escapeHtml(page.title)} explains how to move a Tsundere project from local development into a production environment. It focuses on reproducible builds, runtime startup, secrets, and operational recovery.`;
   }
@@ -438,6 +527,22 @@ function purpose(page) {
   if (page.groupSlug === "examples") {
     return `Use this example as a starting point, not as a locked-in framework. Copy the structure, replace placeholders, and keep project-specific behavior inside your own services.`;
   }
+  const language = languageDetails[page.title];
+  if (page.groupSlug === "yuri-language" && language) {
+    return `Use ${escapeHtml(page.title)} when writing source code that needs to remain readable, type-aware, and compatible with generated JavaScript or TypeScript. This page shows the everyday pattern and the production pattern so examples do not stop at toy syntax.`;
+  }
+  const testing = testingDetails[page.title];
+  if (testing) {
+    return `Use this page to decide what to test, where to keep fixtures, and how to keep command handlers testable without connecting to Discord. It is especially useful before changing compiler behavior, command discovery, package installs, or interaction handlers.`;
+  }
+  const deploy = deploymentDetails[page.title];
+  if (deploy) {
+    return `Use this page when preparing a release, debugging a failed host, or documenting how a project starts after \`tsundere build\`. It connects the local development workflow to production operators and CI logs.`;
+  }
+  const example = exampleDetails[page.title];
+  if (example) {
+    return `Use this example to understand a realistic layout: ${escapeHtml(example.structure)}. It is intentionally small so you can add your own services without inheriting a hidden bot framework.`;
+  }
   return `Use this topic when you need a reliable mental model for Tsundere projects. It connects beginner usage with production concerns like configuration, diagnostics, testing, and deployment.`;
 }
 
@@ -455,6 +560,19 @@ function architecture(page) {
   }
   if (page.groupSlug === "tooling") {
     return `Tooling architecture is split between the VS Code/Cursor extension, YuriLS, generated \`.yuri-cache\` metadata, and the CLI. This keeps editor features fast without requiring a separate package ecosystem.`;
+  }
+  if (page.groupSlug === "yuri-language") {
+    return `Language architecture keeps Yuri close to TypeScript syntax, then lowers supported conveniences before emitting Node-compatible output. Public APIs should stay typed, internal helpers should stay small, and source maps should keep generated code traceable to \`.yuri\` files.`;
+  }
+  if (page.groupSlug === "testing") {
+    return `Testing architecture separates pure services from gateway/runtime wiring. Source tests can call services directly, runtime tests can inspect generated output, and integration tests can mock Discord interactions without requiring a live bot token.`;
+  }
+  if (page.groupSlug === "deployment") {
+    return `Deployment architecture starts with \`tsundere install\`, produces artifacts with \`tsundere build\`, then runs generated runtime output with \`tsundere start\`. Production hosts should provide secrets through environment variables and keep generated files separate from source edits.`;
+  }
+  const example = exampleDetails[page.title];
+  if (example) {
+    return `Example architecture: ${escapeHtml(example.structure)}. Start from the template, keep \`main.yuri\` focused on startup, and move reusable logic into services so the example can grow without becoming tangled.`;
   }
   return `The design favors small files, explicit imports, generated metadata where useful, and Node-compatible output. ${escapeHtml(page.title)} should remain compatible with npm packages and should not require hidden framework magic.`;
 }
@@ -481,7 +599,20 @@ function beginnerExample(page) {
     return `import { Client, Intents } from "@tsundere/discord"\n\nconst client = new Client({\n  token: env.DISCORD_TOKEN,\n  intents: [Intents.Guilds]\n})\n\nclient.login()`;
   }
   if (page.groupSlug === "examples") {
+    const example = exampleDetails[page.title];
+    if (example) {
+      return example.beginner;
+    }
     return `tsundere create my-example --template empty\ncd my-example\ntsundere install\ntsundere dev`;
+  }
+  if (page.groupSlug === "yuri-language" && languageDetails[page.title]) {
+    return languageDetails[page.title].beginner;
+  }
+  if (page.groupSlug === "testing" && testingDetails[page.title]) {
+    return testingDetails[page.title].example;
+  }
+  if (page.groupSlug === "deployment" && deploymentDetails[page.title]) {
+    return deploymentDetails[page.title].beginner;
   }
   return `// ${page.title}\nconst enabled = true\n\nif (enabled) {\n  log("Tsundere is ready")\n}`;
 }
@@ -507,6 +638,18 @@ function advancedExample(page) {
   if (page.groupSlug.includes("discord")) {
     return `client.on("interactionCreate", async (interaction) => {\n  if (interaction.isCommand("ping")) {\n    await interaction.deferReply({ ephemeral: true })\n    await interaction.editReply({ content: "pong" })\n  }\n})`;
   }
+  if (page.groupSlug === "yuri-language" && languageDetails[page.title]) {
+    return languageDetails[page.title].advanced;
+  }
+  if (page.groupSlug === "testing" && testingDetails[page.title]) {
+    return `${testingDetails[page.title].example}\n\n# CI gate\nnpm run build\nnpm test`;
+  }
+  if (page.groupSlug === "deployment" && deploymentDetails[page.title]) {
+    return deploymentDetails[page.title].advanced;
+  }
+  if (page.groupSlug === "examples" && exampleDetails[page.title]) {
+    return exampleDetails[page.title].advanced;
+  }
   return `export async function run${identifier(page.title)}(ctx) {\n  try {\n    await ctx.execute()\n  } catch err {\n    log("Failed: " + err.message)\n  }\n}`;
 }
 
@@ -521,6 +664,18 @@ function reference(page) {
   }
   if (page.groupSlug === "discord-components") {
     return `Reference this page with Discord's component limits: custom IDs should stay under 100 characters, action rows have strict component counts, modals have input limits, and typed component helpers should serialize only the data needed by the handler.`;
+  }
+  if (page.groupSlug === "yuri-language" && languageDetails[page.title]) {
+    return `Reference notes: Yuri accepts TypeScript-style code for this topic, emits Node-compatible JavaScript or TypeScript, and keeps npm package interop intact. Prefer explicit annotations for exported functions, command handlers, service boundaries, and values read from Discord or environment variables.`;
+  }
+  if (page.groupSlug === "testing" && testingDetails[page.title]) {
+    return `Reference notes: keep fixtures under \`tests/fixtures\`, run \`npm test\` or \`tsundere test\`, and cover both source behavior and generated runtime behavior when compiler or CLI code changes. Mock Discord objects rather than calling the live API in normal unit tests.`;
+  }
+  if (page.groupSlug === "deployment" && deploymentDetails[page.title]) {
+    return `Reference notes: the production path is \`tsundere install\`, \`tsundere build\`, then \`tsundere start\`. Keep \`.env\` out of Git, confirm \`@tsundere/discord\` resolves locally, and validate host-specific configuration with \`tsundere doctor\`.`;
+  }
+  if (page.groupSlug === "examples" && exampleDetails[page.title]) {
+    return `Reference layout: ${escapeHtml(exampleDetails[page.title].structure)}. Template: \`${escapeHtml(exampleDetails[page.title].template)}\`. Production notes should cover secrets, command sync scope, generated runtime folders, and where project-specific services belong.`;
   }
   return `Reference details for ${escapeHtml(page.title)} should include accepted inputs, generated output, configuration keys, related CLI commands, diagnostics, and runtime behavior. Keep this page close to source examples and update it when APIs change.`;
 }
@@ -542,6 +697,38 @@ function bestPractices(page) {
       "Keep generated output out of source edits.",
       "Use command output in CI so failures are visible in logs.",
       "Pair CLI changes with `tsundere doctor`, build, and tests before release."
+    ];
+  }
+  if (page.groupSlug === "yuri-language") {
+    return [
+      "Keep exported APIs typed even when local variables can use inference.",
+      "Prefer small service functions over large event callbacks.",
+      "Use normal npm imports and avoid importing generated runtime files directly.",
+      "Run formatter, linter, and build checks before publishing examples."
+    ];
+  }
+  if (page.groupSlug === "testing") {
+    return [
+      "Test pure services before testing gateway wiring.",
+      "Use mock interactions and mock REST clients instead of live Discord calls.",
+      "Keep fixtures small and name them after the behavior they prove.",
+      "Run tests after regenerating docs, runtime output, or command metadata."
+    ];
+  }
+  if (page.groupSlug === "deployment") {
+    return [
+      "Build once, then run the generated runtime artifact consistently.",
+      "Store secrets in environment variables or platform secret managers.",
+      "Run health checks before switching traffic or declaring a deploy complete.",
+      "Document rollback steps before a production incident happens."
+    ];
+  }
+  if (page.groupSlug === "examples") {
+    return [
+      "Treat examples as starting points, not production policy.",
+      "Replace placeholder IDs, tokens, channels, and guild settings immediately.",
+      "Move real business logic into services so handlers stay readable.",
+      "Add tests before turning an example into a deployed bot."
     ];
   }
   return [
@@ -571,6 +758,38 @@ function commonMistakes(page) {
       `Skipping the command-specific troubleshooting note: ${escapeHtml(cli.troubleshoot)}`
     ];
   }
+  if (page.groupSlug === "yuri-language") {
+    return [
+      "Using `any` instead of modeling the actual Discord or service type.",
+      "Editing generated JavaScript instead of the source `.yuri` file.",
+      "Assuming Discord partial objects always include every property.",
+      "Mixing hidden framework assumptions into examples meant to be plain Yuri."
+    ];
+  }
+  if (page.groupSlug === "testing") {
+    return [
+      "Only testing generated output while leaving source helpers untested.",
+      "Calling the live Discord API from unit tests.",
+      "Skipping negative cases such as missing options, missing intents, or failed replies.",
+      "Letting snapshots hide behavior changes without reviewing the diff."
+    ];
+  }
+  if (page.groupSlug === "deployment") {
+    return [
+      "Deploying before running `tsundere build` and tests locally or in CI.",
+      "Committing `.env` files or bot tokens.",
+      "Starting Node manually with the wrong generated file instead of using `tsundere start`.",
+      "Forgetting privileged Discord intent toggles in the developer portal."
+    ];
+  }
+  if (page.groupSlug === "examples") {
+    return [
+      "Leaving example command names, guild IDs, or channel IDs unchanged.",
+      "Copying example structure but skipping `.env.example` updates.",
+      "Turning examples into a hidden framework with too much shared state.",
+      "Deploying an example before checking permissions and command sync scope."
+    ];
+  }
   return [
     "Skipping configuration validation before production.",
     "Copying examples without replacing placeholder IDs, tokens, or paths.",
@@ -596,6 +815,38 @@ function troubleshooting(page) {
       `Verify required intents: ${escapeHtml(event.intents.join(", "))}.`,
       "Check Discord developer portal privileged intent settings when member, presence, or content data is missing.",
       "Use structured logs to confirm whether the event did not fire or the handler failed."
+    ];
+  }
+  if (page.groupSlug === "yuri-language") {
+    return [
+      "Run `tsundere build` and inspect the generated diagnostic line number.",
+      "Check whether the code uses a supported Yuri convenience or plain TypeScript-style syntax.",
+      "Search generated output only for debugging; make fixes in `.yuri` source.",
+      "If editor help looks stale, restart YuriLS or run `tsundere types sync` for Discord metadata."
+    ];
+  }
+  if (page.groupSlug === "testing") {
+    return [
+      "Run the narrow test first, then the full suite.",
+      "If a fixture fails after compiler changes, inspect both source and generated output.",
+      "If mocks fail, compare them to the current @tsundere/discord runtime type shape.",
+      "Use `tsundere doctor` when package or runtime resolution breaks tests."
+    ];
+  }
+  if (page.groupSlug === "deployment") {
+    return [
+      "Run `tsundere doctor` on the target machine or deployment image.",
+      "Verify `DISCORD_TOKEN`, guild IDs, command sync settings, and runtime package resolution.",
+      "Check process manager logs before editing source code.",
+      "If startup works locally but not on the host, compare Node versions and environment variables."
+    ];
+  }
+  if (page.groupSlug === "examples") {
+    return [
+      "Run the example exactly once before customizing it.",
+      "Check `.env.example` and replace placeholders with real local values.",
+      "Use `tsundere build` before `tsundere dev` if syntax errors are unclear.",
+      "When Discord commands do not appear, confirm guild sync settings and restart the bot."
     ];
   }
   return [
@@ -671,6 +922,8 @@ function pageSearchText(page) {
     overview(page),
     purpose(page),
     architecture(page),
+    beginnerExample(page),
+    advancedExample(page),
     reference(page),
     ...bestPractices(page),
     ...commonMistakes(page),
