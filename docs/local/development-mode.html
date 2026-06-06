@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Development Mode - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Development Mode</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">`tsundere dev` is the normal loop while building a bot. It discovers commands, compiles source, emits runtime JavaScript, launches Node, watches `.yuri` files, and restarts the runtime when code changes.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What Runs When You Type It</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere dev</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The CLI loads `tsundere.config.json`, validates basic fields, and calls `writeCommandManifest`. That writes `.yuri-cache/discord.commands.json` based on the command discovery config. Then `devProject` builds the project and starts `.tsundere/runtime-build/main.js` with Node.</p>
+        <p class="mt-4 leading-7 text-slate-700">The watcher uses `fs.watch` when available and also keeps a polling snapshot every 750ms. That fallback matters on Windows and OneDrive-style folders where recursive watching can be unreliable.</p>
+        <p class="mt-4 leading-7 text-slate-700">Rebuilds are serialized. If a file changes while a build is already running, the dev loop marks a pending rebuild and runs it after the current build finishes. That avoids two compiler passes writing the same output folder at once. The restart delay is short, so saving several files quickly should settle into one or two restarts rather than a long chain of half-built runtime processes.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">The Runtime Process</h2>
+        <p class="mt-4 leading-7 text-slate-700">Runtime output is not run from `build/main.ts`. The dev flow writes JavaScript into `.tsundere/runtime-build`, then spawns Node with that entry. Standard output is forwarded directly. Standard error is passed through a small branding rewrite so Node version footers can say `Tsundere Runtime &lt;version&gt; (v...)`.</p>
+        <p class="mt-4 leading-7 text-slate-700">The `.env` file is read by `readDotEnv` in the compiler project module. Values from `.env` are merged into the spawned process environment, so `env.DISCORD_TOKEN` works after the compiler adds the `env` prelude.</p>
+        <p class="mt-4 leading-7 text-slate-700">When the child process exits because you changed files, dev mode kills it with a termination signal and immediately rebuilds. When it exits by itself with a non-zero code, dev mode prints `Tsundere runtime exited with code ... Waiting for changes...` and keeps the watcher alive. That is deliberate: you can fix the source file, save, and let the same dev session recover.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Command Discovery During Dev</h2>
+        <p class="mt-4 leading-7 text-slate-700">The default starter config points discovery at `./src/commands`, uses route-based names, and includes an admin group override. A file like `src/commands/ping.yuri` becomes `/ping`; a file under an admin group can become `/admin ban` depending on the group settings.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere commands sync</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Use the command above when you want to regenerate command metadata without starting dev mode.</p>
+        <p class="mt-4 leading-7 text-slate-700">Discovery does not execute command files. It reads `.yuri` source and extracts simple metadata from object-style `name` and `description` fields or from `Slash.command("...")` and `.description("...")` builder calls. If you compute a command name dynamically, discovery will not understand it. Keep exported command names literal if you want clean metadata.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Expected Files After Dev Starts</h2>
+        <p class="mt-4 leading-7 text-slate-700">After the first successful dev build, you should be able to inspect `build`, `.tsundere/runtime-build`, `.tsundere/runtime/discord`, and `.yuri-cache/discord.commands.json`. The exact files depend on your `source` tree, but a Discord starter should at least produce a runtime `main.js`. If those folders are missing, the build step did not complete.</p>
+        <p class="mt-4 leading-7 text-slate-700">On Windows and Linux the paths are the same inside the project. The difference is only in how the runtime process and platform checks are launched. Windows npm commands are wrapped as `.cmd` executables where needed. Linux uses shell-compatible command lookup and may apply executable permissions to scripts during doctor checks.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Troubleshooting Dev Mode</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>If dev mode says no `.yuri` files were found, check the `source` field in `tsundere.config.json`.</li>
+          <li>If the runtime exits immediately, run `tsundere build` to separate compile errors from runtime errors.</li>
+          <li>If Discord events do not fire, check intents in both code and the Discord Developer Portal.</li>
+          <li>If command metadata is stale, run `tsundere commands sync` and inspect `.yuri-cache/discord.commands.json`.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="first-project.html">First Project</a>, <a class="text-pink-700 underline" href="production-builds.html">Production Builds</a>, <a class="text-pink-700 underline" href="discord-events.html">Discord Events</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

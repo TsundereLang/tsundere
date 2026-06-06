@@ -165,6 +165,8 @@ tsundere metrics serve --port 9100 --path /metrics
 tsundere reload
 tsundere stress runtime
 tsundere stress runtime --heavy
+tsundere stress system
+tsundere stress system --heavy
 tsundere store path
 tsundere store prune
 tsundere cache clean
@@ -231,11 +233,16 @@ Stress and optimization testing:
 ```powershell
 npm run stress:runtime
 npm run stress:runtime:heavy
+npm run stress:system
+npm run stress:system:heavy
 tsundere stress runtime --iterations 100000 --shards 128 --cache-entries 50000 --tasks 500 --metrics-samples 500 --payload-bytes 1024
 tsundere stress runtime --json
+tsundere stress system --packages 150 --yuri-files 100 --commands 50 --build-repeats 3 --hydrate-repeats 3 --json
 ```
 
 The stress tester pounds the new distributed runtime foundation locally: automatic scale planning, simulated shards, IPC broadcasts, global events, cache hit/miss paths, singleton task execution, Prometheus metrics generation, Grafana dashboard generation, memory delta, total operations, per-section timings, and operations per second.
+
+`tsundere stress system` runs a broader optimization test across the current Tsundere feature surfaces. It creates temporary disposable projects and checks distributed runtime clustering/sharding, compiler output, runtime build emission, slash command discovery, package store harvest and hydration, YAML workspace and lock snapshots, corrupt cache validation, store prune, platform runtime checks, updater release simulation, docs surface presence, per-section timings, memory delta, total operations, and operations per second. It does not contact Discord, does not run real npm installs, and cleans its temp workspace unless `--keep-temp` is passed.
 
 ## Package Optimizer
 

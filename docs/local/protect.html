@@ -25,52 +25,185 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Tsundere Protect</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere Protect is the protection pipeline for Node.js runtime output. The current version includes the first working foundation: protected builds, source map stripping, string encoding, runtime metadata, and build fingerprints.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere Protect is an early protection pass for the JavaScript emitted into `.tsundere/runtime-build`. It runs after `.yuri` files have been compiled and after TypeScript output has been converted to runtime JavaScript. The implementation lives in `src/compiler/protect.ts`, and the CLI enables it with `tsundere build --protect`.</p>
+      <p class="mt-4 leading-8 text-slate-600">Protect is useful for adding build fingerprints, removing obvious source-map comments, encoding static strings, and making casual copying harder. It is not encryption for secrets, not licensing enforcement, not DRM, and not a guarantee that JavaScript cannot be reverse engineered. Treat it as traceable friction, not a security boundary.</p>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">What This Page Teaches</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Where Protect sits in the build pipeline.</li>
+          <li>What the `standard`, `advanced`, and `maximum` profiles actually do.</li>
+          <li>What files are written under `.tsundere/runtime-build`.</li>
+          <li>How build IDs and `--seed` work.</li>
+          <li>How `tsundere fingerprint inspect` reads metadata or scans an output file.</li>
+          <li>What Protect does not protect, including tokens and server-side secrets.</li>
+        </ul>
+      </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Current Commands</h2>
+        <h2 class="text-2xl font-semibold">The Real Build Flow</h2>
+        <p class="mt-4 leading-7 text-slate-700">When you run `tsundere build --protect standard`, the CLI parses `--protect` in `src/cli.ts`, passes the selected profile and optional seed into `buildProject`, and `src/compiler/project.ts` applies `protectJavaScript` to each emitted runtime file. Protection happens only when `--protect` is present.</p>
+        <ol class="mt-4 list-decimal space-y-3 pl-6 leading-7 text-slate-700">
+          <li>Tsundere loads `tsundere.config.json`.</li>
+          <li>It scans the configured source directory for `.yuri` files.</li>
+          <li>It compiles `.yuri` files into `build/` or the configured `outDir`.</li>
+          <li>It emits runnable JavaScript into `.tsundere/runtime-build/`.</li>
+          <li>If `--protect` was passed, it transforms the runtime JavaScript before writing it.</li>
+          <li>It writes `.tsundere/runtime-build/tsundere-protect.json` with profile, seed, file names, and build IDs.</li>
+        </ol>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere build --protect standard
 tsundere build --protect advanced
 tsundere build --protect maximum
-tsundere build --protect advanced --seed my-build
-tsundere fingerprint inspect
+tsundere build --protect advanced --seed release-2026-06-06</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">If `--protect` is passed without a valid profile name, the CLI falls back to `standard`. Valid profiles are exactly `standard`, `advanced`, and `maximum`.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Profile Behavior</h2>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Profile</th><th class="px-4 py-3">What It Adds Today</th><th class="px-4 py-3">What It Does Not Add</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">standard</td><td class="px-4 py-3">Comment stripping, source-map comment stripping, static string encoding, build ID insertion, whitespace minification, metadata.</td><td class="px-4 py-3">No guard function, no integrity token, no wrapper layer.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">advanced</td><td class="px-4 py-3">Everything in `standard`, plus generated guard code and a small integrity token check.</td><td class="px-4 py-3">No control-flow flattening, no runtime virtualization, no real tamper-proofing.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">maximum</td><td class="px-4 py-3">Everything in `advanced`, plus an extra generated wrapper gate.</td><td class="px-4 py-3">No layered decryptor system, no secret protection, no licensing server.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 leading-7 text-slate-700">The old roadmap language talks about stronger layers such as control-flow flattening, asset protection, environment protection, anti-debugging, and licensing. Those are future ideas. The current source implements the smaller set above.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What String Encoding Means</h2>
+        <p class="mt-4 leading-7 text-slate-700">Protect leaves import lines alone, then replaces ordinary quoted strings with calls to a generated decoder helper. The encoded payload is base64 text produced after XORing characters with a build key. Template strings that contain interpolation are left alone for compatibility.</p>
+        <div class="mt-4 rounded-lg border border-slate-200 p-5">
+          <p class="leading-7 text-slate-700">This is obfuscation, not cryptography. Anyone with the protected file has the decoder helper and the encoded strings. Do not place Discord tokens, database passwords, API keys, license secrets, or customer secrets in source code and expect Protect to hide them. Use `.env`, deployment secrets, or server-side storage.</p>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Build IDs and Seeds</h2>
+        <p class="mt-4 leading-7 text-slate-700">Each protected file receives a build ID shaped like `7A4F-91D3-C2E8`. The ID is generated from the profile, entropy, and sometimes the current time. When you pass a seed that is not `auto`, the fingerprint uses that seed and omits the time component, so repeated builds with the same profile and seed can produce the same build ID.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere build --protect standard --seed customer-a
+tsundere build --protect standard --seed customer-b
+tsundere build --protect standard --seed auto</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The metadata records the seed as the provided value, or `auto` when no seed is supplied. Use named seeds when you need repeatable fingerprints for an internal build process. Use no seed or `auto` when you want each build to vary.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Metadata File</h2>
+        <p class="mt-4 leading-7 text-slate-700">Protected builds write one metadata file in the runtime output directory:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>.tsundere/runtime-build/tsundere-protect.json</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The file contains `generatedAt`, `profile`, `seed`, and a `files` list. Each file entry includes the emitted runtime file path, the build ID, and the profile used for that file.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
+  "generatedAt": "2026-06-06T12:00:00.000Z",
+  "profile": "advanced",
+  "seed": "release-2026-06-06",
+  "files": [
+    {
+      "file": "main.js",
+      "buildId": "7A4F-91D3-C2E8",
+      "profile": "advanced"
+    }
+  ]
+}</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Fingerprint Inspection</h2>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere fingerprint inspect` defaults to `.tsundere/runtime-build`. The CLI keeps the target inside the current project root through the shared path-safety helper before reading anything.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere fingerprint inspect
+tsundere fingerprint inspect .tsundere/runtime-build
 tsundere fingerprint inspect .tsundere/runtime-build/main.js</code></pre>
-        <p class="mt-4 text-slate-600">Use `--seed` when you need deterministic fingerprints for repeated builds. Omit it, or use `--seed auto`, when every build should look different.</p>
+        <p class="mt-4 leading-7 text-slate-700">If the target is a directory and contains `tsundere-protect.json`, the report prints the profile and every protected file. If the target is a directory without metadata, it prints `No Tsundere fingerprint metadata found in this directory.` and returns exit code `1`.</p>
+        <p class="mt-4 leading-7 text-slate-700">If the target is a file, the CLI scans for build-ID-shaped values with the pattern `0000-0000-0000` using uppercase hex characters. If it finds IDs, it prints each unique build. If not, it prints `No Tsundere fingerprint detected.` and returns exit code `1`.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>Tsundere Fingerprint Report
+  profile: advanced
+  main.js: 7A4F-91D3-C2E8 (advanced)</code></pre>
       </section>
 
-      <section class="mt-10 grid gap-4 md:grid-cols-3">
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Standard</h2>
-          <p class="mt-3 text-slate-600">Whitespace minification, source map stripping, string encoding, and build fingerprint metadata. Low performance impact.</p>
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What To Check After a Protected Build</h2>
+        <ol class="mt-4 list-decimal space-y-3 pl-6 leading-7 text-slate-700">
+          <li>Run `tsundere build --protect standard` and make sure the command exits successfully.</li>
+          <li>Open `.tsundere/runtime-build/tsundere-protect.json` and confirm every expected runtime file is listed.</li>
+          <li>Run `tsundere fingerprint inspect` and confirm it reports the same build IDs.</li>
+          <li>Run `tsundere start` in a safe test environment and confirm the protected runtime still starts.</li>
+          <li>If using Discord, test interactions with a test bot before shipping a protected build.</li>
+        </ol>
+        <p class="mt-4 leading-7 text-slate-700">Protect transforms JavaScript text. Most simple projects should keep working, but generated output can expose edge cases in string handling or minification. Test the protected output, not just the unprotected dev build.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Windows and Linux Notes</h2>
+        <p class="mt-4 leading-7 text-slate-700">Protect itself uses Node APIs and writes into the project directory, so the same command shape works on Windows, macOS, and Linux. The practical differences are shell syntax and path display.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Windows PowerShell</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>tsundere build --protect advanced --seed release-test
+tsundere fingerprint inspect .tsundere/runtime-build</code></pre>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Linux or macOS Shell</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>tsundere build --protect advanced --seed release-test
+tsundere fingerprint inspect .tsundere/runtime-build</code></pre>
+          </div>
         </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Advanced</h2>
-          <p class="mt-3 text-slate-600">Standard features plus runtime integrity checks and generated guard code. More advanced control-flow work is planned next.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Maximum</h2>
-          <p class="mt-3 text-slate-600">Advanced features plus an extra runtime wrapper layer. Runtime virtualization and layered decryptors are planned future work.</p>
+        <p class="mt-4 leading-7 text-slate-700">On Linux, make sure the CLI is executable if you installed from a source checkout. `tsundere doctor` checks Linux executable permissions for bundled scripts and reports Node and npm availability.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Putting Secrets in Source</h3>
+            <p class="mt-3 leading-7 text-slate-700">Protect does not make source-embedded secrets safe. Keep secrets in environment variables or infrastructure secret stores.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Expecting Dev Mode Protection</h3>
+            <p class="mt-3 leading-7 text-slate-700">`tsundere dev` does not pass protect options. Use `tsundere build --protect ...` when you want protected runtime output.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Inspecting the Wrong Directory</h3>
+            <p class="mt-3 leading-7 text-slate-700">The metadata file lives in `.tsundere/runtime-build`, not `build/`. `build/` is the intermediate output directory.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Assuming Maximum Means Complete</h3>
+            <p class="mt-3 leading-7 text-slate-700">`maximum` currently adds a small wrapper gate on top of advanced behavior. It is not a full virtualization or commercial licensing system.</p>
+          </div>
         </div>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Protection Layers</h2>
-        <div class="mt-4 space-y-4 text-slate-700">
-          <p><strong>Runtime integrity:</strong> Advanced and maximum builds insert runtime checks so protected output can fail fast when helper code is obviously damaged.</p>
-          <p><strong>String encoding:</strong> Static strings are encoded with a build-specific helper. Template strings with interpolation are left alone for compatibility.</p>
-          <p><strong>Build fingerprints:</strong> Protected files get unique build IDs and metadata in `.tsundere/runtime-build/tsundere-protect.json`.</p>
-          <p><strong>Seeded builds:</strong> `--seed my-build` produces deterministic fingerprints. `--seed auto` or no seed produces randomized build IDs.</p>
-          <p><strong>Future layers:</strong> Control-flow flattening, asset protection, stronger string encryption, environment protection, and anti-debugging are roadmap items.</p>
+        <h2 class="text-2xl font-semibold">Troubleshooting</h2>
+        <div class="mt-4 space-y-4">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">`fingerprint inspect` says no metadata was found</h3>
+            <p class="mt-3 leading-7 text-slate-700">Run a protected build first. A normal `tsundere build` removes and recreates `.tsundere/runtime-build` without writing `tsundere-protect.json`.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">The protected bot fails but the dev bot works</h3>
+            <p class="mt-3 leading-7 text-slate-700">Inspect the emitted `.tsundere/runtime-build/main.js`, try the lower `standard` profile, and check whether unusual strings or generated code were affected by minification. Keep a small reproduction file if you open an issue.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Build IDs do not change</h3>
+            <p class="mt-3 leading-7 text-slate-700">Check whether you passed a fixed `--seed`. Fixed seeds are meant to make fingerprints repeatable. Remove the seed or use `--seed auto` for varied IDs.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">A path outside the project is rejected</h3>
+            <p class="mt-3 leading-7 text-slate-700">That is expected. Fingerprint inspection uses project-bounded path resolution so a malformed path cannot read arbitrary files outside the current project.</p>
+          </div>
         </div>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Fingerprinting</h2>
-        <p class="mt-3 text-slate-600">Protected builds receive unique IDs that can be inspected from metadata or from a protected output file.</p>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere fingerprint inspect app.js
-
-Tsundere Fingerprint Report
-  build: 7A4F-91D3-C2E8</code></pre>
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <div class="mt-4 grid gap-3 md:grid-cols-2">
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="production-builds.html">Production Builds</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="roadmap.html">Roadmap</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="cli.html">CLI and Runtime</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="installation-troubleshooting.html">Installation Troubleshooting</a>
+        </div>
       </section>
     </main>
   </div>

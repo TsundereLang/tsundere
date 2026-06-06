@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Opening Local Docs - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Opening Local Docs</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere ships local HTML docs with the CLI package. They do not require a documentation server; the CLI opens the installed `docs/local/index.html` file in your system browser.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Open the Docs</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere docs</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The CLI resolves `docs/local/index.html` relative to the installed CLI root. If it exists, Tsundere prints the path and calls the platform opener: `cmd.exe /c start` on Windows, `open` on macOS, and `xdg-open` on Linux.</p>
+        <p class="mt-4 leading-7 text-slate-700">No dev server is required for normal reading. These pages are static HTML files with shared CSS and JavaScript. The tradeoff is that browser security rules and relative paths matter: open the HTML file from its real `docs/local` folder so `theme.css`, `theme.js`, and the logo path resolve correctly.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Reading Docs From Source</h2>
+        <p class="mt-4 leading-7 text-slate-700">In a source checkout, open this file directly:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>docs/local/index.html</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The pages load `theme.css` and `theme.js`, and many pages reference `../../assets/tsundere-logo.png`. If you move an HTML page outside `docs/local`, those paths will break.</p>
+        <p class="mt-4 leading-7 text-slate-700">From the repository, the docs are also covered by `npm run docs:check`. That script verifies required Getting Started pages, checks local references in every HTML page, and confirms the Getting Started pages are present in the shared theme index. It is a lightweight docs build gate for static files.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>npm run docs:check</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Because the docs are static, editing them is straightforward: change the HTML file, update `theme.js` if navigation or search needs to know about it, then run the checker. There is no markdown compilation step right now. That makes docs easy to ship in a release bundle, but it also means shared layout changes must be kept consistent manually.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Installed Package Versus Repository Docs</h2>
+        <p class="mt-4 leading-7 text-slate-700">When you run `tsundere docs` from an installed CLI, you are opening the docs that came with that installed package. When you open `docs/local/index.html` from a repository checkout, you are reading the docs in your working tree. If you are testing documentation changes, use the repository file. If you are helping a user understand their installed version, ask them what `tsundere version` prints and remember their local docs may be older than your branch.</p>
+        <p class="mt-4 leading-7 text-slate-700">This distinction matters after releases. A docs fix committed to the repo does not automatically update every installed CLI. It must be included in a release package, then installed or updated on the user's machine. If a user says the docs are wrong, ask whether they are reading GitHub, a source checkout, or the installed local docs.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Search, Theme, and Navigation</h2>
+        <p class="mt-4 leading-7 text-slate-700">The search box is generated by `docs/local/theme.js`. That script owns the docs search index and dynamically adds a few navigation links and dropdowns. When new local docs pages are added, the search index and dropdowns must be updated manually.</p>
+        <p class="mt-4 leading-7 text-slate-700">The theme script also adds the author strip, dark/light toggle, Getting Started dropdown, Discord dropdown, Roadmap dropdown, and search result snippets. If a page exists but never appears in search, the page file alone is not enough; add an entry to `docsIndex` with text that includes the terms users are likely to search.</p>
+        <p class="mt-4 leading-7 text-slate-700">Because navigation is partly generated at runtime, view a changed page in a browser after editing `theme.js`. A syntax error in that shared script can break search and navigation across every docs page even though the HTML files still open.</p>
+        <p class="mt-4 leading-7 text-slate-700">The sidebar HTML inside each page still includes base links. `theme.js` enhances that base navigation after the page loads. This is why docs pages can look simple in source but show dropdowns in the browser. When adding a whole new section, update both the base nav pattern in the HTML pages you touch and the generated dropdown/search behavior when needed.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Troubleshooting</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>If `tsundere docs` says local docs were not found, the installed package is missing the `docs` directory.</li>
+          <li>If Linux cannot open the browser, install an `xdg-open` provider or open the HTML file manually.</li>
+          <li>If search does not find a new page, update `docs/local/theme.js`.</li>
+        </ul>
+        <p class="mt-4 leading-7 text-amber-950">If the docs open but styling is missing, check that you are opening the file from the real docs folder and that `theme.css` sits next to the HTML file. If the logo is missing, check `assets/tsundere-logo.png` relative to the repository root or installed package root.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="joining-community.html">Joining The Community</a>, <a class="text-pink-700 underline" href="reading-release-notes.html">Reading Release Notes</a>, <a class="text-pink-700 underline" href="updates.html">Updates</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

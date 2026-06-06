@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -25,56 +25,86 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Templates</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Templates are small starting points. They create the files needed to run, but they do not hide a full framework behind the project.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Templates are the files created by `tsundere create`. They are intentionally small: a Tsundere starter should teach the runtime shape without hiding a full framework behind generated code.</p>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-2xl font-semibold">Important Implementation Detail</h2>
+        <p class="mt-3 leading-7 text-amber-950">The current CLI does not copy the `templates/` folders directly. `tsundere create` uses `templateFiles()` and `templateMain()` in `src/cli.ts` to generate files in memory. The `templates/` directory still contains reference starter files, but the command behavior comes from `src/cli.ts` today. When the docs and disk templates disagree, check the CLI source first.</p>
+      </section>
 
       <section class="mt-10">
         <h2 class="text-2xl font-semibold">Create Syntax</h2>
+        <p class="mt-4 leading-7 text-slate-700">The first non-flag argument is the folder name. The `--template` flag chooses the starter type. If the folder already exists, the command fails instead of overwriting it.</p>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere create my-bot --template discord
 tsundere create api --template rest
 tsundere create socket --template websocket
 tsundere create worker --template microservice
 tsundere create tool --template cli
 tsundere create scratch --template empty</code></pre>
-      </section>
-
-      <section class="mt-10 grid gap-4 md:grid-cols-2">
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Discord Bot</h2>
-          <p class="mt-3 text-slate-600">Creates a Discord client, ping command, command discovery config, `.env.example`, and the local `@tsundere/discord` runtime.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">REST API</h2>
-          <p class="mt-3 text-slate-600">Creates a minimal Express health route. Use it when testing npm package compatibility or backend code.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">WebSocket Server</h2>
-          <p class="mt-3 text-slate-600">Creates a small `ws` server starter. Useful for realtime experiments and bot dashboards.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Microservice</h2>
-          <p class="mt-3 text-slate-600">Creates a single async handler. Use it for jobs, queues, and small service modules.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">CLI Tool</h2>
-          <p class="mt-3 text-slate-600">Creates a small command-line entry point. Good for local tools and scripts.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Empty Project</h2>
-          <p class="mt-3 text-slate-600">Creates the smallest possible `.yuri` project for testing compiler behavior.</p>
-        </div>
+        <p class="mt-4 leading-7 text-slate-700">After writing files, the CLI tries to install the bundled Discord runtime into `.tsundere/runtime/discord` when the built CLI contains `dist/discord`. If you run `create` from an unbuilt source checkout, that local runtime copy may be skipped until you run `npm run build`, `tsundere runtime install`, or `tsundere install` from a properly built CLI.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Generated Files</h2>
+        <h2 class="text-2xl font-semibold">Files Every Generated Project Gets</h2>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>package.json
 tsundere.config.json
 .env.example
 .gitignore
-src/main.yuri
-.tsundere/runtime/discord/</code></pre>
+src/main.yuri</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`package.json` is an ES module package with scripts for `dev`, `build`, `start`, `lint`, `format`, and `test`. It also includes `@tsundere/discord` as `file:.tsundere/runtime/discord`, even for non-Discord templates in the current generator. That keeps the local runtime available but also means non-Discord starters still carry the Discord dependency until the generator is split more finely.</p>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere.config.json` defaults to `source: "src"`, `outDir: "build"`, `target: "typescript"`, `strict: true`, `sourceMaps: true`, and command discovery under `./src/commands` with an admin group override. `.gitignore` excludes `node_modules`, `build`, `.tsundere`, and `.env`. `.env.example` starts with `DISCORD_TOKEN=replace-me`.</p>
+      </section>
+
+      <section class="mt-10 grid gap-4 md:grid-cols-2">
+        <div class="rounded-lg border border-slate-200 p-5">
+          <h2 class="text-xl font-semibold">Discord</h2>
+          <p class="mt-3 leading-7 text-slate-600">Creates a Discord client with `Client`, `Intents`, `Slash`, and `Embed`, registers `/ping`, replies with an embed, and calls `client.login()`. It also adds `src/commands/ping.yuri` for command discovery metadata.</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 p-5">
+          <h2 class="text-xl font-semibold">REST</h2>
+          <p class="mt-3 leading-7 text-slate-600">Creates an Express app with a `/health` route and listens on `env.PORT ?? 3000`. You still need installable npm dependencies for Express in the project before it runs.</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 p-5">
+          <h2 class="text-xl font-semibold">WebSocket</h2>
+          <p class="mt-3 leading-7 text-slate-600">Creates a `ws` `WebSocketServer` on `env.PORT ?? 3000` and sends an online message to new connections. Like REST, the package dependency must be installed in the project.</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 p-5">
+          <h2 class="text-xl font-semibold">Microservice</h2>
+          <p class="mt-3 leading-7 text-slate-600">Creates `handleJob(input: { id: string })` and returns `{ id, ok: true }`. It is a small module starter, not a queue runner or worker framework.</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 p-5">
+          <h2 class="text-xl font-semibold">CLI</h2>
+          <p class="mt-3 leading-7 text-slate-600">Reads `process.argv.slice(2)`, defaults to `help`, and prints a help message. It demonstrates `.yuri` syntax lowering for `if command == "help" { ... }`.</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 p-5">
+          <h2 class="text-xl font-semibold">Empty</h2>
+          <p class="mt-3 leading-7 text-slate-600">Writes the smallest source file: `export const name = "Tsundere"`. Use it when testing compiler behavior without Discord setup.</p>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">After Creating A Template</h2>
+        <p class="mt-4 leading-7 text-slate-700">The CLI prints the next step as `cd &lt;name&gt; && tsundere install && tsundere dev`. That is the real expected flow. Install first so npm writes `package-lock.json` and Tsundere writes package snapshots. Then start dev mode so command discovery, build output, and runtime output are generated.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>cd my-bot
+tsundere install
+tsundere dev</code></pre>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Common Template Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Expecting `tsundere create` to overwrite an existing folder. It will not.</li>
+          <li>Assuming REST and WebSocket templates install Express or ws for you. Run package install commands for dependencies you use.</li>
+          <li>Editing generated `.tsundere/runtime/discord` files instead of source or CLI runtime code.</li>
+          <li>Assuming disk files in `templates/` are the command source of truth. The current create command uses `src/cli.ts`.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="first-project.html">First Project</a>, <a class="text-pink-700 underline" href="project-structure.html">Project Structure</a>, <a class="text-pink-700 underline" href="examples.html">Examples</a>, <a class="text-pink-700 underline" href="cli.html">CLI and Runtime</a></p>
       </section>
     </main>
   </div>
 </body>
 </html>
-

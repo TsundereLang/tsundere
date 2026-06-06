@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Production Builds - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Production Builds</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Production mode is a two-step idea: build the `.yuri` source into runtime output, then run the generated JavaScript through the Tsundere launcher.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Build</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere build</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`buildProject` scans the configured `source` directory for `.yuri` files. It writes `.ts` or `.js` files into `outDir` based on the `target` config. If source maps are enabled, it also writes `.map` files.</p>
+        <p class="mt-4 leading-7 text-slate-700">After that, Tsundere refreshes `.tsundere/runtime/discord` from the bundled CLI output and emits runnable JavaScript into `.tsundere/runtime-build`. If the config target is TypeScript, it uses TypeScript's `transpileModule` to turn the intermediate `.ts` into ESM JavaScript.</p>
+        <p class="mt-4 leading-7 text-slate-700">The build command exits with code `1` if compiler diagnostics include errors. Warnings are printed unless diagnostics config disables them. If no `.yuri` files exist under `source`, the build warns with the resolved source path instead of pretending the project is fine. That warning usually means `source` is wrong or the project was created without source files.</p>
+        <p class="mt-4 leading-7 text-slate-700">Build output is generated. It is fine to delete `build` and `.tsundere/runtime-build` before a clean build. The runtime emitter removes `.tsundere/runtime-build` before rewriting it, using the path safety helpers so cleanup stays inside the project. If cleanup fails because a process is still using the files, stop the running bot and build again.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Start</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere start</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere start` checks for `.tsundere/runtime-build/main.js`. If it is missing, the CLI builds first. Then it spawns Node on that runtime entry and waits for the process to exit.</p>
+        <p class="mt-4 leading-7 text-slate-700">For deployment, ship the project files needed by npm and Tsundere, run `tsundere install`, set `.env` or environment variables on the host, run `tsundere build`, and launch with `tsundere start` or a process manager that calls that command.</p>
+        <p class="mt-4 leading-7 text-slate-700">The runtime process inherits your environment plus values parsed from `.env`. In a hosted environment, you can skip the `.env` file and set real environment variables instead. If both exist, `.env` values are merged into the spawned process environment by the launcher, so keep deployment secrets consistent and avoid stale local files on servers.</p>
+        <p class="mt-4 leading-7 text-slate-700">Use the same command in your process manager that you test locally. For example, a simple process entry can call `tsundere start` from the project root. Starting `.tsundere/runtime-build/main.js` directly can work, but you lose Tsundere's missing-build check, `.env` load, runtime branding, and future startup checks.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Protected Builds</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere build --protect standard</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The CLI accepts `--protect` with `standard`, `advanced`, or `maximum`. The current protection pipeline lives in `src/compiler/protect.ts`; it can add generated guard code and write `.tsundere/runtime-build/tsundere-protect.json` with fingerprint metadata. Treat this as an early protection feature, not a substitute for real licensing, secrets management, or server-side controls.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere fingerprint inspect</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">You can also pass `--seed` to make protection output more repeatable for a given seed. Without a seed, protection metadata records `auto`. The fingerprint command reads the generated metadata and reports protected runtime files. If no protected build exists, inspect has nothing meaningful to report.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">A Practical Release Checklist</h2>
+        <ol class="mt-4 list-decimal space-y-2 pl-6 leading-7 text-slate-700">
+          <li>Run `tsundere install` so npm and Tsundere package snapshots are current.</li>
+          <li>Run `tsundere build` and fix any diagnostics.</li>
+          <li>Run `tsundere start` once from the project root.</li>
+          <li>Confirm `.env` or deployment environment variables are present on the target machine.</li>
+          <li>Commit source, config, package files, and lockfiles. Do not commit secrets.</li>
+        </ol>
+        <p class="mt-4 leading-7 text-slate-700">For the Tsundere CLI repository itself, release packaging is separate from project builds. The repo script `npm run dist:release` calls the PowerShell distribution builder. That creates installer-oriented artifacts for the CLI, not a production build of your bot project.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Running `node build/main.ts` directly. Tsundere's runtime entry is `.tsundere/runtime-build/main.js`.</li>
+          <li>Deleting `.tsundere/runtime/discord` and then starting without reinstalling. Run `tsundere runtime install` or `tsundere install`.</li>
+          <li>Expecting `--protect` to hide tokens. Secrets belong in environment variables, never in source.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="development-mode.html">Development Mode</a>, <a class="text-pink-700 underline" href="project-structure.html">Project Structure</a>, <a class="text-pink-700 underline" href="protect.html">Tsundere Protect</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

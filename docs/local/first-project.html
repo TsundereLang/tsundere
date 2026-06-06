@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>First Project - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">First Project</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">This page walks through the real starter flow created by `templateFiles` in `src/cli.ts`: a Discord project with `.yuri` source, config, `.env.example`, local runtime dependency, and command discovery settings.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Create the Starter</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere create my-bot --template discord
+cd my-bot</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The create command refuses to overwrite an existing folder. It writes `package.json`, `tsundere.config.json`, `.gitignore`, `.env.example`, `src/main.yuri`, and for the Discord template, `src/commands/ping.yuri`. It also tries to install the bundled Discord runtime into `.tsundere/runtime/discord` when the CLI has built runtime files available.</p>
+        <p class="mt-4 leading-7 text-slate-700">The folder name is resolved inside your current directory by the path safety helper. That means `tsundere create my-bot` creates a sibling folder under the shell location you are already in, while traversal outside the project root is rejected. Pick a short folder name without shell-special characters, especially on Windows where spaces and synced desktop paths can make debugging harder than it needs to be.</p>
+        <p class="mt-4 leading-7 text-slate-700">The Discord template currently imports `Client`, `Intents`, `Slash`, and `Embed` from `@tsundere/discord`. It creates a simple client, responds to `/ping`, and includes command discovery config. Other templates exist for REST, websocket, microservice, CLI, and empty projects, but this walkthrough uses the Discord template because it exercises the most Tsundere-specific runtime behavior.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Install Dependencies</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere install</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">This wraps npm install. Before npm runs, Tsundere checks whether the project depends on `@tsundere/discord`; if it does, the CLI repairs `.tsundere/runtime/discord` so the file dependency points at a real local package. After npm succeeds, the package optimizer stores reusable package files and writes Tsundere YAML snapshots.</p>
+        <p class="mt-4 leading-7 text-slate-700">You should still expect normal npm files. `package-lock.json` is npm's lockfile and Tsundere preserves it. The extra `tsundere-lock.yaml` and `tsundere-workspace.yaml` files are Tsundere's optimizer snapshot of what npm installed; they do not replace npm's lockfile. If npm fails, fix the npm error first. Tsundere only harvests packages into the store after npm exits successfully.</p>
+        <p class="mt-4 leading-7 text-slate-700">A successful install prints elapsed time, cache hits and misses, reused package count, stored package count, and link/copy metrics. The first install usually has misses because the store is empty. Reinstalling the same dependency set should show more reuse once the store has valid entries.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Add Your Discord Token</h2>
+        <p class="mt-4 leading-7 text-slate-700">The starter uses `env.DISCORD_TOKEN` in `src/main.yuri`. During runtime, `src/compiler/project.ts` reads `.env`, merges values into `process.env`, and starts Node with that environment. Copy `.env.example` to `.env` and put your bot token there.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>DISCORD_TOKEN=replace-me</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Do not commit `.env`. The starter `.gitignore` includes `.env`, `node_modules/`, `build/`, and `.tsundere/`.</p>
+        <p class="mt-4 leading-7 text-slate-700">The `.env` parser is intentionally simple: it reads non-empty lines, ignores comment lines that start with `#`, splits on the first `=`, trims the key and value, and removes one surrounding pair of quotes. It does not implement every feature from dotenv packages. Keep the token on one line and avoid inline comments after the value.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Run Development Mode</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere dev</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere dev` loads config, validates it, writes command metadata, builds the project, starts `.tsundere/runtime-build/main.js`, and watches `.yuri` files. On file changes, it kills the old runtime process, rebuilds, and starts the new output.</p>
+        <p class="mt-4 leading-7 text-slate-700">The generated runtime is ordinary JavaScript executed by Node. If your bot crashes, you are debugging the generated runtime and your source logic, not a hidden server. Start by reading the last error line, then inspect `.tsundere/runtime-build/main.js` if the error points at generated output. For source-level mistakes, the compiler diagnostics printed before the runtime starts are usually more useful.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-950">Expected Output</h2>
+        <p class="mt-2 leading-7 text-pink-950">A successful dev start usually prints a discovered command count, build messages, and your bot's runtime logs. If the token is valid and Discord gateway access works, the starter logs `Online as ...` from the `ready` event. If Discord login fails, the runtime exits and `tsundere dev` waits for more changes.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Build And Start Once</h2>
+        <p class="mt-4 leading-7 text-slate-700">After the bot runs in development mode, test the production-style commands once. `tsundere build` compiles without starting the watch loop. `tsundere start` runs the built runtime and will build first if `.tsundere/runtime-build/main.js` is missing.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere build
+tsundere start</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">This catches a different class of issues than dev mode. For example, if your service relies on a file path relative to the source folder, it may behave differently once the runtime entry is under `.tsundere/runtime-build`. Prefer paths based on `process.cwd()` for project files and keep secrets in `.env` or deployment environment variables.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Troubleshooting</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>If `@tsundere/discord` cannot resolve, run `tsundere runtime install` and then `tsundere install`.</li>
+          <li>If no commands are discovered, check `tsundere.config.json` and confirm files live under `src/commands`.</li>
+          <li>If the bot never comes online, confirm `DISCORD_TOKEN` is present in `.env` and the bot has the required Discord intents enabled.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="project-structure.html">Project Structure</a>, <a class="text-pink-700 underline" href="development-mode.html">Development Mode</a>, <a class="text-pink-700 underline" href="discord.html">Discord Guide</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

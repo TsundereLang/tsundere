@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -24,39 +24,177 @@
       </nav>
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
-      <h1 class="text-4xl font-bold tracking-tight">Versions and Updates</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere can report the installed version, check GitHub releases, and automatically install the newest CLI release when you approve it.</p>
+      <h1 class="text-4xl font-bold tracking-tight">Versions</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">This page explains how Tsundere knows its own version, how it checks GitHub releases, and why updating the CLI is separate from updating project dependencies. The behavior here comes from `src/cli.ts`, `src/updater.ts`, and the `tsundere` metadata in `package.json`.</p>
+      <p class="mt-4 leading-8 text-slate-600">The short version: `tsundere version` reads the installed package version, `tsundere updater` checks a GitHub release feed, `tsundere updater self --yes` can install a release tarball globally with npm, and `tsundere update <package>` updates dependencies inside your project.</p>
+
+      <section class="mt-10 rounded-lg border border-slate-200 p-5">
+        <h2 class="text-xl font-semibold">What This Page Teaches</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>What `tsundere version` prints and where those values come from.</li>
+          <li>How Tsundere chooses the GitHub repository used for release checks.</li>
+          <li>How `check`, `info`, `self`, and `cron` updater actions behave.</li>
+          <li>Which release assets the self-updater accepts.</li>
+          <li>How security update notices are cached.</li>
+          <li>How CLI updates differ from npm package updates in a project.</li>
+        </ul>
+      </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Check Your Version</h2>
+        <h2 class="text-2xl font-semibold">Check the Installed CLI Version</h2>
+        <p class="mt-4 leading-7 text-slate-700">The `version` command reads `package.json` next to the built CLI. If the package file cannot be found, the helper falls back to `0.0.0`, which is a sign that the install or build layout is wrong.</p>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere version</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Expected output shape:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>Tsundere 0.1.1
+GitHub releases: TsundereLang/tsundere</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">That second line is important. It tells you which repository the updater will query unless you override it for testing.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Check for Updates</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere updater
-tsundere updater check
-tsundere updater self --yes
-tsundere updater self --dry-run</code></pre>
-        <p class="mt-4 text-slate-600">`tsundere updater self --yes` downloads the newest CLI tarball from the configured GitHub release and installs it globally with npm. `--dry-run` verifies the chosen release asset without changing the machine.</p>
+        <h2 class="text-2xl font-semibold">Where the Release Repository Comes From</h2>
+        <p class="mt-4 leading-7 text-slate-700">The CLI resolves the update repository in this order:</p>
+        <ol class="mt-4 list-decimal space-y-3 pl-6 leading-7 text-slate-700">
+          <li>`TSUNDERE_UPDATE_REPO`, when the environment variable is set.</li>
+          <li>`package.json` metadata at `tsundere.githubRepo`.</li>
+          <li>The hardcoded fallback `TsundereLang/tsundere`.</li>
+        </ol>
+        <p class="mt-4 leading-7 text-slate-700">The repo format is `owner/repo`, because `src/updater.ts` calls the GitHub API endpoint for the latest release.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">PowerShell</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>$env:TSUNDERE_UPDATE_REPO = "TsundereLang/tsundere"
+tsundere updater check</code></pre>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Linux or macOS Shell</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>TSUNDERE_UPDATE_REPO="TsundereLang/tsundere" tsundere updater check</code></pre>
+          </div>
+        </div>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Configure the GitHub Repo</h2>
-        <p class="mt-3 text-slate-600">The package metadata points at `TsundereLang/tsundere`. During local testing you can override it with an environment variable.</p>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>$env:TSUNDERE_UPDATE_REPO = "owner/repo"
-tsundere updater</code></pre>
+        <h2 class="text-2xl font-semibold">Updater Commands</h2>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere updater` defaults to `check`. The allowed actions are `check`, `info`, `self`, and `cron`. Anything else prints the usage error from `src/cli.ts`.</p>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Command</th><th class="px-4 py-3">Real Behavior</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">tsundere updater</td><td class="px-4 py-3">Same as `tsundere updater check`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater check</td><td class="px-4 py-3">Prints current version, release repo, latest release, update status, and the self-update hint.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater info</td><td class="px-4 py-3">Uses the same latest-release path as `check`; useful when you want release visibility without installing.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater self --dry-run</td><td class="px-4 py-3">Selects the release asset and reports what would be installed without changing the machine.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater self --yes</td><td class="px-4 py-3">Downloads the selected CLI tarball and runs `npm install -g` on it.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater self --force --yes</td><td class="px-4 py-3">Allows reinstalling even when the latest release is not newer than the current version.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater cron install</td><td class="px-4 py-3">Installs an automatic daily update check using Windows Task Scheduler or a Unix crontab entry.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater cron status</td><td class="px-4 py-3">Checks whether the scheduled updater exists.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere updater cron remove</td><td class="px-4 py-3">Removes the scheduled updater entry.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Project Package Updates</h2>
-        <p class="mt-3 text-slate-600">If you pass package names, `tsundere update` behaves like a package update command instead of a CLI self-update check.</p>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere update discord.js
-tsundere update mysql2</code></pre>
+        <h2 class="text-2xl font-semibold">What the GitHub Check Reads</h2>
+        <p class="mt-4 leading-7 text-slate-700">The latest-release function calls GitHub's `releases/latest` API with an Accept header for GitHub JSON and a `User-Agent` like `tsundere-cli/0.1.1`. It reads the release tag, normalizes a leading `v`, keeps the release URL, keeps the assets array, and preserves the release body for security-notice checks.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>https://api.github.com/repos/TsundereLang/tsundere/releases/latest</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">If GitHub cannot be reached, returns a non-OK response, or does not include a valid tag, `tsundere updater check` prints:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>Could not read the latest release. Check your network connection or TSUNDERE_UPDATE_REPO.</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Release Asset Rules</h2>
+        <p class="mt-4 leading-7 text-slate-700">The self-updater does not install arbitrary release files. It looks for a Tsundere CLI tarball in this order:</p>
+        <ol class="mt-4 list-decimal space-y-3 pl-6 leading-7 text-slate-700">
+          <li>A versioned tarball matching `tsundere-cli-1.2.3...tgz`.</li>
+          <li>An exact `tsundere-cli.tgz` asset.</li>
+          <li>Any tarball name starting with `tsundere-cli` and ending in `.tgz`.</li>
+        </ol>
+        <p class="mt-4 leading-7 text-slate-700">If the latest release does not include a matching tarball, `selfUpdate` returns code `1` with the message `Latest release is missing a tsundere-cli tarball asset.` This usually means the release packaging step failed or the release was drafted without upload assets.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Version Comparison</h2>
+        <p class="mt-4 leading-7 text-slate-700">Tsundere compares release versions by removing a leading `v`, splitting on dots, parsing numeric parts, and comparing each position. That means `v0.1.2` and `0.1.2` compare the same. It is a simple numeric comparison, not a full semantic-version parser with prerelease ordering.</p>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Comparison</th><th class="px-4 py-3">Result</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">0.1.2 vs 0.1.1</td><td class="px-4 py-3">Newer release available.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">v0.1.1 vs 0.1.1</td><td class="px-4 py-3">Same version.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">0.1.1 vs 0.1.2</td><td class="px-4 py-3">Installed version is behind the target.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Automatic Checks and Security Notices</h2>
+        <p class="mt-4 leading-7 text-slate-700">The CLI can show a security update notice before running higher-risk or common commands: `dev`, `start`, `build`, `install`, `add`, and `update`. This happens in `maybeWarnSecurityUpdate` before command handling continues.</p>
+        <p class="mt-4 leading-7 text-slate-700">The notice path checks the latest release, compares it to the installed version, then looks for words such as `security`, `critical`, `vulnerability`, `cve-`, `exploit`, `hotfix`, or `patch now` in the tag, version, or release body. Results are cached for 24 hours in:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>~/.tsundere/security-update-cache.json</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Set `TSUNDERE_NO_UPDATE_NOTICE=1` when you want command output to stay quiet in automation.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Scheduled Update Checks</h2>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere updater cron` only schedules a daily check. It does not silently install new versions. On Windows, Tsundere uses `schtasks` with the task name `Tsundere Daily Update Check`. On Linux and macOS, it edits crontab entries marked with `# tsundere-daily-update-check`.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Install or Inspect</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>tsundere updater cron install
+tsundere updater cron status
+tsundere updater cron remove</code></pre>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Custom Time</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>tsundere updater cron install --time 09:30</code></pre>
+          </div>
+        </div>
+        <p class="mt-4 leading-7 text-slate-700">The Unix implementation currently writes a `0 10 * * *` line regardless of the `--time` value passed into the CLI. The CLI accepts the option, but the Unix cron helper does not yet apply it. Windows passes the selected time to `schtasks`.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Project Package Versions Are Separate</h2>
+        <p class="mt-4 leading-7 text-slate-700">Do not use `tsundere updater self` to update `discord.js`, `zod`, `mysql2`, or any other dependency in your bot project. The self-updater changes the globally installed Tsundere CLI. Project packages go through the package optimizer, which wraps npm and preserves `package.json` plus `package-lock.json` behavior.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere install discord.js
+tsundere add zod
+tsundere update discord.js
+tsundere remove zod</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">After a successful install/update/remove, the package optimizer can also refresh `tsundere-workspace.yaml` and `tsundere-lock.yaml`, but npm remains the source of package resolution through `package-lock.json`.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Troubleshooting</h2>
+        <div class="mt-4 space-y-4">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">`tsundere version` says `0.0.0`</h3>
+            <p class="mt-3 leading-7 text-slate-700">The CLI could not find or read its package file. Rebuild from source with `npm run build`, check that `dist/cli.js` is being run from the expected package root, or reinstall the CLI release.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">The latest release cannot be read</h3>
+            <p class="mt-3 leading-7 text-slate-700">Check network access, GitHub availability, and `TSUNDERE_UPDATE_REPO`. The repo value must be `owner/repo`, not a full URL.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">A release exists but self-update fails</h3>
+            <p class="mt-3 leading-7 text-slate-700">Open the release assets and confirm there is a `.tgz` file named like `tsundere-cli-0.1.1.tgz` or `tsundere-cli.tgz`. Without that asset, the updater refuses to install.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Scheduled updates do not appear on Linux</h3>
+            <p class="mt-3 leading-7 text-slate-700">Run `crontab -l` and look for `# tsundere-daily-update-check`. If `crontab` is missing on the machine, install or enable the system's cron service, then rerun `tsundere updater cron install`.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <div class="mt-4 grid gap-3 md:grid-cols-2">
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="updating-tsundere.html">Updating Tsundere</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="updates.html">Updates</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="reading-release-notes.html">Reading Release Notes</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="cli.html">CLI and Runtime</a>
+        </div>
       </section>
     </main>
   </div>
 </body>
 </html>
-
-

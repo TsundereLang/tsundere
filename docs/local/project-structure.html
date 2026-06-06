@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Structure - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Project Structure</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">A Tsundere project is a normal Node project with `.yuri` source files, a JSON Tsundere config, npm dependencies, and a generated local runtime folder. Understanding these paths makes troubleshooting much easier.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Starter Layout</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>my-bot/
+  package.json
+  package-lock.json
+  tsundere.config.json
+  tsundere-workspace.yaml
+  tsundere-lock.yaml
+  .env
+  .env.example
+  src/
+    main.yuri
+    commands/
+      ping.yuri
+  build/
+  .tsundere/
+    runtime/
+      discord/
+    runtime-build/
+  .yuri-cache/
+    discord.commands.json</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Not every file exists immediately. `package-lock.json`, `tsundere-workspace.yaml`, and `tsundere-lock.yaml` are written after install. `build` and `.tsundere/runtime-build` are written after build/dev/start. `.yuri-cache/discord.commands.json` is written by command sync and dev mode.</p>
+        <p class="mt-4 leading-7 text-slate-700">The structure is intentionally close to a normal Node project. You can open `package.json`, inspect scripts, run npm commands, and commit npm lockfiles the same way you would in a JavaScript project. Tsundere adds the `.yuri` source folder, config, generated runtime folders, and package optimizer snapshots around that familiar core.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Config</h2>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere.config.json` is loaded by `src/config.ts`. Defaults exist for `name`, `source`, `outDir`, `target`, `strict`, `sourceMaps`, `runtime`, `plugins`, and diagnostics. If `TSUNDERE_ENV` is set, Tsundere also tries `tsundere.&lt;env&gt;.config.json` after the base config.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
+  "name": "my-bot",
+  "source": "src",
+  "outDir": "build",
+  "target": "typescript",
+  "strict": true,
+  "sourceMaps": true,
+  "commands": {
+    "discovery": true,
+    "routeBased": true,
+    "directory": "./src/commands"
+  }
+}</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Config loading is layered. Tsundere starts with defaults, loads `tsundere.config.json` if it exists, then loads `tsundere.&lt;TSUNDERE_ENV&gt;.config.json` when the environment variable is set. Later layers override earlier ones. Nested diagnostic, Discord, enterprise, and runtime options are merged rather than replaced wholesale where the config loader knows those shapes.</p>
+        <p class="mt-4 leading-7 text-slate-700">Validation is currently focused on the basics: `name` must be a string, `source` and `outDir` must be directories, and `target` must be `javascript` or `typescript`. That means a typo in a more advanced option might not always fail during config load. When a setting seems ignored, compare it against the TypeScript types and the module that actually consumes it.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Generated Runtime Paths</h2>
+        <p class="mt-4 leading-7 text-slate-700">`build` is not the final runtime folder. First, `.yuri` files compile into `build` as `.ts` or `.js`, depending on `target`. Then `emitNodeRuntime` converts those outputs into runnable JavaScript under `.tsundere/runtime-build`. `tsundere start` runs `.tsundere/runtime-build/main.js`.</p>
+        <p class="mt-4 leading-7 text-slate-700">The local Discord wrapper lives separately under `.tsundere/runtime/discord`. Its `package.json` declares `@tsundere/discord`, exports `./dist/index.js`, and depends on Discord.js. Your project `package.json` points to it with `file:.tsundere/runtime/discord`.</p>
+        <p class="mt-4 leading-7 text-slate-700">Build output is safe to delete. The compiler removes and recreates `.tsundere/runtime-build` when emitting runtime output, and it can refresh the bundled Discord runtime dist files from the CLI package. Do not hand-edit generated runtime files as a fix; change the `.yuri` source or the CLI code that emits them.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Package Files</h2>
+        <p class="mt-4 leading-7 text-slate-700">`package.json` remains the source of dependency declarations. npm writes `package-lock.json`. Tsundere reads npm's lockfile to understand installed package names, versions, integrity strings, direct dependency status, and disk locations. It then writes `tsundere-workspace.yaml` and `tsundere-lock.yaml` as an npm-derived snapshot for the optimizer layer.</p>
+        <p class="mt-4 leading-7 text-slate-700">The global store lives outside the project, normally under `~/.tsundere/store`. Project references tell prune which store entries are still used. This is why `tsundere store prune` can remove unreferenced cache entries without touching your project files. The safety code validates paths before removing or hydrating files so a bad store path cannot escape the intended directory.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Files You Usually Commit</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>`src/**/*.yuri`</li>
+          <li>`package.json` and `package-lock.json`</li>
+          <li>`tsundere.config.json`</li>
+          <li>`tsundere-workspace.yaml` and `tsundere-lock.yaml` if your team wants Tsundere's npm-derived snapshot committed</li>
+          <li>Documentation, examples, and config templates</li>
+        </ul>
+        <p class="mt-4 leading-7 text-slate-700">The starter `.gitignore` excludes `node_modules`, `build`, `.tsundere`, and `.env`. Keep it that way unless you have a specific release artifact reason.</p>
+        <p class="mt-4 leading-7 text-slate-700">If you are building a deployable archive, create it from source, config, lockfiles, and an install step. Shipping `.tsundere/runtime-build` can be useful for a controlled release bundle, but it should not be the only copy of your bot logic. The source and lockfiles are what let another developer rebuild the project cleanly.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="first-project.html">First Project</a>, <a class="text-pink-700 underline" href="yuri-files.html">.yuri Files</a>, <a class="text-pink-700 underline" href="production-builds.html">Production Builds</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

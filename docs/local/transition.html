@@ -25,37 +25,118 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Transition to Yuri</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Yuri is familiar if you know JavaScript, but Tsundere is not meant to be a plain one-to-one copy. The Discord workflow uses command discovery, typed wrapper APIs, stricter diagnostics, and project layouts that remove repeated bot boilerplate.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">This page is for JavaScript, TypeScript, and Python bot developers who want to move into Tsundere without guessing what Yuri really is. Yuri is not a finished independent language runtime. In this repo, `.yuri` files are compiled by `src/compiler/transpile.ts` through targeted source transforms, then the project builder emits runnable JavaScript into `.tsundere/runtime-build`.</p>
+      <p class="mt-4 leading-8 text-slate-600">The safest way to learn Yuri today is to keep code close to JavaScript and TypeScript, then use the few Tsundere conveniences that are actually implemented: `env`, `log`, `print`, parenthesis-light `if`, `fn`, Discord import rewriting, native Discord blocks, Spanglish aliases, source maps, strict diagnostics, command discovery, and the bundled `@tsundere/discord` wrapper.</p>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">What This Page Teaches</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>How `.yuri` maps to JavaScript or TypeScript in the current compiler.</li>
+          <li>Which shorthand forms are implemented in `src/compiler/transpile.ts`.</li>
+          <li>How to port Discord.js event handlers and slash commands without losing control of the code.</li>
+          <li>How Python bot habits translate into Tsundere's Node and Discord.js-shaped model.</li>
+          <li>Which ideas are experimental and should not be treated like stable language features yet.</li>
+        </ul>
+      </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">From JavaScript</h2>
+        <h2 class="text-2xl font-semibold">The Mental Model</h2>
+        <p class="mt-4 leading-7 text-slate-700">A `.yuri` file is source code that Tsundere reads, lightly normalizes, and writes as `.ts` or `.js` depending on `target` in `tsundere.config.json`. The project builder in `src/compiler/project.ts` then writes TypeScript-style output into the configured `outDir`, transpiles runtime JavaScript when needed, refreshes `.tsundere/runtime/discord`, and emits runnable files under `.tsundere/runtime-build`.</p>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Layer</th><th class="px-4 py-3">What Happens</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">src/*.yuri</td><td class="px-4 py-3">Your source files. Keep these close to JS/TS while using supported Yuri shorthand.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">src/compiler/transpile.ts</td><td class="px-4 py-3">Normalizes implemented syntax and emits diagnostics. This is not a full AST parser yet.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">build/</td><td class="px-4 py-3">Intermediate `.ts` or `.js` output based on project config.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.tsundere/runtime-build/</td><td class="px-4 py-3">Runnable Node JavaScript. `tsundere start` runs `.tsundere/runtime-build/main.js`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.tsundere/runtime/discord</td><td class="px-4 py-3">Local file package for the bundled Discord wrapper used by generated projects.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 leading-7 text-slate-700">That model matters because it keeps expectations honest. If normal JavaScript or TypeScript syntax is valid after Tsundere's transforms, it is usually the least surprising path. If a proposed Yuri feature is not listed here or used in `docs/examples`, test it with `tsundere build` before relying on it.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">From JavaScript or TypeScript</h2>
+        <p class="mt-4 leading-7 text-slate-700">Most Discord.js code moves over by keeping the event shape and using Tsundere's wrapper helpers where they make the code clearer. Imports from `tsundere/discord` are rewritten to `@tsundere/discord`, and imports that already use `@tsundere/discord` are preserved.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">JavaScript</h3>
-            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>client.on("interactionCreate", async (i) => {
-  if (!i.isChatInputCommand()) return
-  if (i.commandName === "ping") {
-    await i.reply("pong")
+            <h3 class="font-semibold">Discord.js Style</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>client.on("interactionCreate", async (interaction) =&gt; {
+  if (!interaction.isChatInputCommand()) return
+  if (interaction.commandName === "ping") {
+    await interaction.reply("pong")
   }
 })</code></pre>
           </div>
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">Yuri</h3>
-            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>client.on("interactionCreate", async (interaction) => {
+            <h3 class="font-semibold">Yuri Style</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>client.on("interactionCreate", async (interaction) =&gt; {
   if interaction.isCommand("ping") {
     await interaction.reply("pong")
   }
 })</code></pre>
           </div>
         </div>
-        <p class="mt-4 text-slate-600">The big change is not just syntax. Tsundere tries to infer Discord intent needs, validate Discord limits, and suggest wrapper methods directly in the editor.</p>
+        <p class="mt-4 leading-7 text-slate-700">The `if interaction.isCommand("ping") {` form is one of the currently implemented parenthesis-light transforms. It becomes `if (interaction.isCommand("ping")) {` before the runtime is emitted. This is useful, but keep complex conditions simple. If a condition starts getting hard to read, use normal JavaScript parentheses.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">From Python</h2>
+        <h2 class="text-2xl font-semibold">Runtime Prelude Helpers</h2>
+        <p class="mt-4 leading-7 text-slate-700">The compiler adds small prelude bindings only when it sees the matching names. If your code uses `env.`, Tsundere emits `const env = process.env`. If your code uses `log(`, it emits a bound `console.log`. If your code uses `print(`, it emits another bound `console.log` alias.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>const client = new Client({
+  token: env.DISCORD_TOKEN,
+  intents: [Intents.Guilds]
+})
+
+log("starting bot")
+print("same console output path")</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">This is why examples can use `env.DISCORD_TOKEN` without an import. It is still Node environment access. Put secrets in `.env` for local development, because `src/compiler/project.ts` merges `.env` values into the child process started by `tsundere dev` and `tsundere start`.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Syntax That Actually Lowers Today</h2>
+        <p class="mt-4 leading-7 text-slate-700">The supported shorthand is deliberately small. These forms are implemented as source transforms in `src/compiler/transpile.ts`, so whitespace and shape can matter more than it would in a mature parser.</p>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Yuri Form</th><th class="px-4 py-3">Emitted Shape</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">fn name(args) {}</td><td class="px-4 py-3">`function name(args) {}`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">async fn name(args) {}</td><td class="px-4 py-3">`async function name(args) {}`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">if value {}</td><td class="px-4 py-3">`if (value) {}`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">catch error {}</td><td class="px-4 py-3">`catch (error) {}`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">client bot { token ... intents [...] }</td><td class="px-4 py-3">`const bot = new Client({ token, intents })`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">on ready() {}</td><td class="px-4 py-3">`bot.on("ready", async () =&gt; {})`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">embed { title "Hi" }</td><td class="px-4 py-3">`Embed.create().title("Hi")`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">await interaction.reply { content "pong" }</td><td class="px-4 py-3">`await interaction.reply({ content: "pong" })`</td></tr>
+              <tr><td class="px-4 py-3 font-mono">match(value) {}</td><td class="px-4 py-3">Warns with `YURI210` and emits a runtime `match(value)({` shape.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 leading-7 text-slate-700">There is also a Spanglish layer: `usar discord { Client }`, `usar pkg "name"`, `verdad`, `falso`, `nulo`, `ahora()`, `Text`, `Num`, `Bool`, `Void`, `tipo`, `sea`, `retorna`, `espera`, `lanza`, `intenta`, `captura`, `si`, `sino`, `para`, and `mientras`. These are real transforms, but teams that want the clearest migration path usually start with JavaScript-like Yuri first.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Discord Diagnostics You Will Notice</h2>
+        <p class="mt-4 leading-7 text-slate-700">When `strict` is enabled in config, Tsundere adds warnings and errors that are Discord-specific. These do not replace TypeScript or Discord.js validation. They are source checks that catch common bot mistakes early.</p>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>`YURI101` warns when strict code uses `any`.</li>
+          <li>`DISCORD010` errors when a custom ID is longer than Discord's 100 character limit.</li>
+          <li>`DISCORD005` errors when embed title or description builder strings exceed Discord limits.</li>
+          <li>`DISCORD002` warns when event handlers appear to need intents such as `GuildMessages`, `GuildMembers`, `GuildPresences`, or `GuildVoiceStates`.</li>
+          <li>`DISCORD003` warns when message content is read without an obvious `MessageContent` intent.</li>
+          <li>`DISCORD020` warns around operations such as ban, kick, timeout, channel creation, role changes, and audit log reads.</li>
+        </ul>
+        <p class="mt-4 leading-7 text-slate-700">These diagnostics are intentionally practical. If a warning appears, read the hint, then check the Discord developer portal and your bot invite permissions. Some intents are privileged and cannot be fixed by code alone.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">From Python Bot Frameworks</h2>
+        <p class="mt-4 leading-7 text-slate-700">Python bot frameworks often feel decorator-driven: define an event or command, and the framework wires it up. Tsundere is closer to Discord.js. You create a client, attach event handlers, define commands, and run the bot through Node. Command discovery can reduce loader boilerplate, but it does not hide the generated command metadata from you.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">Python Bot Style</h3>
+            <h3 class="font-semibold">Python Habit</h3>
             <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>@bot.event
 async def on_ready():
     print("online")
@@ -65,33 +146,82 @@ async def ping(ctx):
     await ctx.reply("pong")</code></pre>
           </div>
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">Yuri Bot Style</h3>
-            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>client.once("ready", () => {
+            <h3 class="font-semibold">Tsundere Habit</h3>
+            <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-100"><code>client.once("ready", () =&gt; {
   log("online")
 })
 
-Slash.command("ping")
-  .description("Reply with pong")
-  .register(client)</code></pre>
+export const command = Slash.command("ping")
+  .description("Reply with pong")</code></pre>
           </div>
         </div>
-        <p class="mt-4 text-slate-600">Python decorators usually hide registration inside the framework. Tsundere keeps registration explicit or discoverable through command files, so you can still understand what gets sent to Discord.</p>
+        <p class="mt-4 leading-7 text-slate-700">A command file like `src/commands/ping.yuri` can be discovered by `tsundere commands sync` or by `tsundere dev` before the runtime starts. The output goes to `.yuri-cache/discord.commands.json`, so you can inspect what Tsundere found.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Core Differences</h2>
-        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Concept</th><th class="px-4 py-3">How Yuri Handles It</th></tr></thead>
-            <tbody class="divide-y divide-slate-200">
-              <tr><td class="px-4 py-3 font-mono">imports</td><td class="px-4 py-3">Use normal package imports, including npm packages and `@tsundere/discord`.</td></tr>
-              <tr><td class="px-4 py-3 font-mono">events</td><td class="px-4 py-3">Use `client.on` and `client.once`, with Discord-aware autocomplete and intent diagnostics.</td></tr>
-              <tr><td class="px-4 py-3 font-mono">commands</td><td class="px-4 py-3">Use `Slash.command` or command files in `src/commands` for discovery.</td></tr>
-              <tr><td class="px-4 py-3 font-mono">replies</td><td class="px-4 py-3">Use typed interaction helpers like `reply`, `deferReply`, `editReply`, and `followUp`.</td></tr>
-              <tr><td class="px-4 py-3 font-mono">builders</td><td class="px-4 py-3">Use Tsundere builders for embeds, buttons, rows, modals, and selects.</td></tr>
-              <tr><td class="px-4 py-3 font-mono">runtime</td><td class="px-4 py-3">Use `tsundere dev`, `tsundere build`, and `tsundere start` instead of manually running generated files.</td></tr>
-            </tbody>
-          </table>
+        <h2 class="text-2xl font-semibold">A Safe Migration Path</h2>
+        <ol class="mt-4 list-decimal space-y-3 pl-6 leading-7 text-slate-700">
+          <li>Create or open a Tsundere project and keep `target` as `typescript` while learning.</li>
+          <li>Move one Discord event handler at a time into `src/main.yuri` or a small imported module.</li>
+          <li>Replace `process.env.X` with `env.X` only when it makes the code clearer.</li>
+          <li>Use normal `client.on`, `client.once`, `Slash.command`, `Embed.create`, and interaction reply calls first.</li>
+          <li>Move slash command definitions into `src/commands` after the bot starts cleanly.</li>
+          <li>Run `tsundere build` after each syntax change and inspect `build/` or `.tsundere/runtime-build/` if behavior surprises you.</li>
+          <li>Run `tsundere dev` only after the project builds, because dev mode will rebuild and restart on changes.</li>
+        </ol>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere build
+tsundere commands sync
+tsundere dev
+tsundere start</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Treating Yuri Like a Full Parser</h3>
+            <p class="mt-3 leading-7 text-slate-700">The current compiler uses targeted regular-expression and block transforms. Deeply nested experimental syntax may not lower the way you expect. When in doubt, write ordinary JS/TS-shaped code.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Running Generated Files By Hand</h3>
+            <p class="mt-3 leading-7 text-slate-700">Use `tsundere start` instead of manually running `.tsundere/runtime-build/main.js`. The CLI builds if needed, loads `.env`, and rewrites runtime error footers to Tsundere Runtime branding.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Forgetting Intent Warnings</h3>
+            <p class="mt-3 leading-7 text-slate-700">If you handle messages, members, presences, or voice state, configure the matching intent in code and in Discord's developer portal when the intent is privileged.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Assuming Command Discovery Registers Commands</h3>
+            <p class="mt-3 leading-7 text-slate-700">Discovery writes local metadata. Your bot code or command sync workflow still needs to register commands through the Discord API path used by your project.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Troubleshooting</h2>
+        <div class="mt-4 space-y-4">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">The build output looks weird</h3>
+            <p class="mt-3 leading-7 text-slate-700">Open the matching file in `build/` first. If `target` is `typescript`, then check `.tsundere/runtime-build/` after TypeScript transpilation. This usually shows whether the surprise came from Yuri lowering or from TypeScript-to-JavaScript emission.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">A Discord helper cannot be imported</h3>
+            <p class="mt-3 leading-7 text-slate-700">Run `tsundere runtime install` and then `tsundere install`. Generated projects depend on `@tsundere/discord` through `file:.tsundere/runtime/discord`, so the local runtime package has to exist.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">A command file is ignored</h3>
+            <p class="mt-3 leading-7 text-slate-700">Check `commands.directory` in `tsundere.config.json`. The default command discovery path is `./src/commands`, and route-based discovery uses the file path to build command routes.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <div class="mt-4 grid gap-3 md:grid-cols-2">
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="yuri-files.html">.yuri Files</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="discord.html">Discord Guide</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="discord-layouts.html">Discord Layouts</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="cli.html">CLI and Runtime</a>
         </div>
       </section>
     </main>

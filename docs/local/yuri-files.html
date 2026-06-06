@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>.yuri Files - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">.yuri Files</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">`.yuri` files are the source files Tsundere compiles. They are intentionally close to JavaScript and TypeScript today, with extra lowering for Discord-oriented blocks and a few friendlier syntax forms.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">The Safest Style</h2>
+        <p class="mt-4 leading-7 text-slate-700">The current compiler in `src/compiler/transpile.ts` is not a full AST parser. It performs ordered transforms and diagnostics. The most reliable code looks like normal TypeScript-style JavaScript with imports, `const`, functions, classes/interfaces, object literals, and calls to `@tsundere/discord` helpers.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents, Slash, Embed } from "@tsundere/discord"
+
+const client = new Client({
+  token: env.DISCORD_TOKEN,
+  intents: [Intents.Guilds, Intents.GuildMessages]
+})
+
+client.once("ready", () => {
+  log(`Online as ${client.user.tag}`)
+})</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">When the compiler sees `env.` it adds `const env = process.env`. When it sees `log(` or `print(` it adds a console helper. Imports from `tsundere/discord` are normalized to `@tsundere/discord`.</p>
+        <p class="mt-4 leading-7 text-slate-700">Think of this as a practical source format rather than a finished new programming language. The compiler walks every `.yuri` file under the configured `source` directory, applies text-aware transforms, emits `.ts` or `.js` into `outDir`, and then emits runnable JavaScript under `.tsundere/runtime-build`. If a feature looks like normal JavaScript or TypeScript, it is usually the safest choice.</p>
+        <p class="mt-4 leading-7 text-slate-700">Local imports should be written without generated-output paths. For example, import `./services/users` from source. During runtime emission, Tsundere adds `.js` extensions to relative ESM imports so Node can resolve the generated files. Do not import from `.tsundere/runtime-build` inside source files.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Lowered Syntax</h2>
+        <p class="mt-4 leading-7 text-slate-700">Tsundere currently lowers several forms: TypeScript-like functions with `fn`, simpler `if condition {}` forms, Spanish-inspired keywords such as `sea`, `retorna`, `espera`, `si`, and `sino`, and Discord blocks such as `embed`, `button`, `row`, `client`, `bot`, and `command`. These are useful, but because they are implemented through transforms, keep nesting simple and test output with `tsundere build`.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>embed {
+  title: "Pong"
+  description: `Latency: ${client.ping}ms`
+  color: "#ff7ab6"
+}</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">That style is lowered into chained builder calls. If a transform does not understand the shape you wrote, use normal JavaScript-like calls instead.</p>
+        <p class="mt-4 leading-7 text-slate-700">The compiler also recognizes `client name { ... }` and `bot name { ... }` blocks that create a `Client`, event blocks such as `on ready { ... }`, and object-call blocks like `interaction.reply { content: "pong" }`. These are conveniences. They are not a promise that every nested block or future syntax idea is complete today.</p>
+        <p class="mt-4 leading-7 text-slate-700">When documenting or teaching Tsundere code, prefer examples that compile through the current implementation. The beginner-safe form is still explicit imports plus normal calls: `Client`, `Slash.command`, `Embed.create`, `Button.secondary`, `Row.of`, and `client.on`. That style is easier to compare against the generated JavaScript when troubleshooting.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What Build Output Looks Like</h2>
+        <p class="mt-4 leading-7 text-slate-700">If `target` is `typescript`, `src/main.yuri` first becomes `build/main.ts`. The runtime emitter then uses TypeScript's `transpileModule` to turn that file into `.tsundere/runtime-build/main.js`. If `target` is `javascript`, Tsundere writes JavaScript earlier and copies it into runtime output after import extension cleanup. Source maps are added when `sourceMaps` is true.</p>
+        <p class="mt-4 leading-7 text-slate-700">Open the generated file only to understand what happened. The generated file is not where you fix bugs. A clean edit loop is: change `.yuri`, run `tsundere build`, read diagnostics, and then inspect output if the emitted JavaScript is surprising. This keeps source, build output, and runtime output from drifting apart.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Diagnostics You May See</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>`YURI101`: strict mode warns when it sees `any`.</li>
+          <li>`YURI210`: pattern matching is recognized but not fully lowered yet.</li>
+          <li>`DISCORD002` and `DISCORD003`: event code may need Discord intents such as `GuildMessages`, `GuildMembers`, or `MessageContent`.</li>
+          <li>`DISCORD005`: embed title or description exceeds Discord limits.</li>
+          <li>`DISCORD010`: component custom IDs exceed Discord's 100 character limit.</li>
+          <li>`DISCORD020`: code appears to require Discord permissions such as `BanMembers`, `ManageRoles`, or `ViewAuditLog`.</li>
+        </ul>
+        <p class="mt-4 leading-7 text-slate-700">Diagnostics can be filtered by config. `diagnostics.warnings: false` suppresses warnings, and `diagnostics.disabled` can suppress specific diagnostic codes. Errors still stop the build. Keep warnings on while learning; they are useful because they catch Discord intent and permission mistakes before you stare at a silent bot.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Common Mistakes</h2>
+        <p class="mt-2 leading-7 text-amber-950">Do not assume every future Yuri idea exists today. If the compiler emits surprising JavaScript, simplify to normal TypeScript-like syntax. Also remember that `.yuri` output is ESM; imports must resolve in Node after Tsundere adds `.js` extensions for local imports in runtime output.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="development-mode.html">Development Mode</a>, <a class="text-pink-700 underline" href="production-builds.html">Production Builds</a>, <a class="text-pink-700 underline" href="transition.html">Transition to Yuri</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -38,6 +38,7 @@ The active TypeScript build compiles `src/` into `dist/`. Some package directori
 - Package optimizer: npm-compatible package install optimization, global store validation, hardlink/copy materialization, YAML workspace/lock snapshots.
 - Type bridge: Discord type extraction, IntelliSense metadata, type cache generation.
 - Security: shared path safety and filesystem boundary helpers.
+- Stress: disposable fixture-based runtime, compiler, package optimizer, platform, updater, and docs surface stress checks.
 
 ## Target Package Layout
 
@@ -86,7 +87,7 @@ Use these commands after structural changes:
 npm run build
 npm run test:unit
 npm run stress:runtime
+npm run stress:system
 node dist/cli.js doctor
 node dist/cli.js inspect
 ```
-

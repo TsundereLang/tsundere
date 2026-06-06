@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Linux Setup - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Linux Setup</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Linux support uses Node's platform APIs and POSIX-style paths. The CLI expects Node and npm, uses `sh` for command lookup, and checks executable permissions through `tsundere doctor`.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Prerequisites</h2>
+        <p class="mt-4 leading-7 text-slate-700">Install Node.js and npm from your distribution, NodeSource, fnm, nvm, or another trusted source. For the web installer, `curl` and `unzip` are also required.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>node --version
+npm --version
+command -v curl
+command -v unzip</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Tsundere's platform detection treats anything that is not `win32` or `darwin` as Linux. That includes many CI Linux environments. Command lookup uses `sh -c "command -v ..."` and normal executable names such as `node`, `npm`, and `npx`; there are no Windows `.cmd` shims on Linux.</p>
+        <p class="mt-4 leading-7 text-slate-700">If you use nvm, fnm, asdf, or another shell-loaded Node manager, run Tsundere from a shell where the manager has already initialized PATH. Scheduled cron update checks may not load your interactive shell profile, so use a globally reachable Node install if you depend on automation.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Linux Web Installer</h2>
+        <p class="mt-4 leading-7 text-slate-700">`scripts/install-tsundere-linux.sh` downloads the latest GitHub release, extracts it, finds `tsundere-cli.tgz`, checks Node/npm, installs pnpm if missing, installs the CLI globally, optionally installs the VS Code/Cursor/Antigravity extension, and runs `tsundere help`.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>sh scripts/install-tsundere-linux.sh</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The script has WSL-specific handling. If it detects WSL, it tries to use a Windows-visible temporary folder to avoid Windows npm problems with `\\wsl.localhost` paths.</p>
+        <p class="mt-4 leading-7 text-slate-700">Like the Windows installer, the Linux script expects the latest release archive to contain `tsundere-cli.tgz`. It downloads a release zip asset when available, otherwise it falls back to the source zipball. A source zipball alone is not enough for a normal install unless the packaged CLI tarball is included inside it.</p>
+        <p class="mt-4 leading-7 text-slate-700">The script prompts to install `vscode-tsundere-*.vsix` when a VSIX is present and `code`, `cursor`, or `antigravity` is available. This prompt reads from `/dev/tty`, so it expects an interactive terminal for extension installation.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Source Checkout Install</h2>
+        <p class="mt-4 leading-7 text-slate-700">For local development of Tsundere itself, use `scripts/install-linux.sh`. It changes to the repo root, runs npm install, builds, and runs doctor.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>sh scripts/install-linux.sh</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">This is not the same as installing a release. It prepares the current checkout and proves that the built CLI can run doctor. Use it when editing Tsundere's own source. Use the web installer or npm global install path when testing what a normal user receives from a release.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Storage and Permissions</h2>
+        <p class="mt-4 leading-7 text-slate-700">Linux storage uses your home directory:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>~/.tsundere/
+~/.tsundere/config.json
+~/.tsundere/cache/
+~/.tsundere/store/
+~/.tsundere/logs/</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Doctor checks executable permissions for known scripts and the built CLI when present. If permission errors appear, fix ownership or run `chmod +x` on the specific file named by the error.</p>
+        <p class="mt-4 leading-7 text-slate-700">The permission helper applies mode `755` to non-Windows executables. It cannot fix every environment: files on read-only mounts, package-managed directories owned by root, or restrictive network mounts may still fail. When that happens, move the project to a normal user-owned directory or repair ownership with your system tools.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Opening Docs And Running Updates</h2>
+        <p class="mt-4 leading-7 text-slate-700">On Linux, `tsundere docs` launches `xdg-open` with the local docs HTML file. Minimal server images often do not have `xdg-open` or a desktop browser. In that case, open `docs/local/index.html` manually from the repository or installed package.</p>
+        <p class="mt-4 leading-7 text-slate-700">Automatic update checks use crontab on Unix-like systems. The updater writes a marked line that runs Node against the installed CLI path. If your Node executable is only available in interactive shells, the cron job may not find it. Check `crontab -l` and run `tsundere updater cron status` when verifying automation.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Common Linux Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Installing Node without npm. Tsundere needs npm for package operations.</li>
+          <li>Running the installer from a filesystem where global npm install cannot write. Use a Node manager or fix npm permissions.</li>
+          <li>Using WSL but launching Windows editor/npm commands against Linux-only paths. Keep the workflow consistently Windows or consistently WSL where possible.</li>
+        </ul>
+        <p class="mt-4 leading-7 text-amber-950">Also avoid running global npm install with `sudo` unless your Node setup explicitly requires it. Mixing root-owned global packages with user-owned projects can make later updates and uninstall steps painful.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="installation.html">Installation</a>, <a class="text-pink-700 underline" href="windows-setup.html">Windows Setup</a>, <a class="text-pink-700 underline" href="installation-troubleshooting.html">Installation Troubleshooting</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

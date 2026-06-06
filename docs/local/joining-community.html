@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Joining The Community - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Joining The Community</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere is early and moving fast, so the community is where rough edges, install problems, Discord runtime behavior, and docs gaps should be reported clearly.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Main Links</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>GitHub organization: `https://github.com/TsundereLang`</li>
+          <li>Main repo: `https://github.com/TsundereLang/tsundere`</li>
+          <li>Discord invite from the README: `https://discord.gg/Gpxj5xVXBZ`</li>
+          <li>Local docs entry: `docs/local/index.html`</li>
+        </ul>
+        <p class="mt-4 leading-7 text-slate-700">Use GitHub for issues that need history, reproduction steps, code review, or release tracking. Use Discord for quick questions, install help, and discussion while a feature is still being shaped. If a Discord conversation uncovers a real bug, turn the final repro into a GitHub issue so it does not disappear into chat history.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">How To Ask For Help</h2>
+        <p class="mt-4 leading-7 text-slate-700">When reporting a problem, include the command you ran, your OS, Node version, Tsundere version, and the relevant output. For project issues, include the shape of `tsundere.config.json`, whether `@tsundere/discord` exists under `.tsundere/runtime/discord`, and whether `tsundere doctor` passes.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere version
+tsundere doctor
+node --version
+npm --version</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">For install problems, also say whether you used the Windows installer, Linux installer, source checkout, npm global install, or updater self-install. Those paths use different code. For package problems, include whether plain `npm install` works and whether `tsundere install` fails before or after npm runs.</p>
+        <p class="mt-4 leading-7 text-slate-700">For Discord runtime problems, include the event or interaction that failed, the relevant `.yuri` source, and the exact runtime stack trace. If the stack trace points into `.tsundere/runtime-build`, include the source file that produced it too. Generated output is useful evidence, but source is where the fix usually belongs.</p>
+        <p class="mt-4 leading-7 text-slate-700">For docs problems, include the page name and whether you are reading the installed local docs, the repository docs, or GitHub-rendered files. The docs are shipped with releases, so a fixed page in the repository may not be present on an older installed CLI.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What Not To Share</h2>
+        <p class="mt-4 leading-7 text-slate-700">Never paste your real `DISCORD_TOKEN`, GitHub token, npm token, `.env` contents, private bot secrets, or release credentials. The starter already ignores `.env`; keep it that way.</p>
+        <p class="mt-4 leading-7 text-slate-700">If you need to show config, replace sensitive values before posting. Prefer small repro projects over screenshots of your whole desktop. A clean report with one command, one error, and a tiny source file gets fixed faster than a wall of unrelated logs.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Contributing Back</h2>
+        <p class="mt-4 leading-7 text-slate-700">If you are working in the repo, read `CONTRIBUTING.md`, `SECURITY.md`, and `docs/ARCHITECTURE.md`. The project is transitioning toward clearer packages, so changes that reduce coupling and improve tests are especially useful.</p>
+        <p class="mt-4 leading-7 text-slate-700">Good contribution areas include docs that match source behavior, tests around package optimizer edge cases, Discord runtime compatibility, Linux and Windows path handling, updater release layout checks, and examples that compile without hidden setup. Before opening a PR, run the relevant build and tests and mention what you verified.</p>
+        <p class="mt-4 leading-7 text-slate-700">Keep changes focused. A fix to `member.roles.add` should come with a runtime test or a small reproduction, not unrelated formatting across the repo. A docs rewrite should cite the commands and files it describes. A release fix should prove the generated asset layout works with the installer and updater paths.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">A Useful Support Template</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>OS:
+Tsundere version:
+Node version:
+npm version:
+Command:
+Expected:
+Actual:
+Relevant files:
+What I already tried:</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">That small structure gives maintainers enough to reproduce the issue without guessing. If the issue is security-sensitive, do not post it publicly; follow the security policy instead.</p>
+        <p class="mt-4 leading-7 text-slate-700">The best reports usually include one minimal command sequence. For example: create a fresh starter, run install, set a dummy token or mock gateway when possible, then run the failing command. If a bug only happens in a private production bot, try to reduce it to a small `.yuri` file before asking others to inspect the entire application.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="opening-local-docs.html">Opening Local Docs</a>, <a class="text-pink-700 underline" href="reading-release-notes.html">Reading Release Notes</a>, <a class="text-pink-700 underline" href="installation-troubleshooting.html">Installation Troubleshooting</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

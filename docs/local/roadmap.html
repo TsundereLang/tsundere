@@ -25,57 +25,167 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Roadmap</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere is a Discord-first language ecosystem. The long-term goal is not only cleaner syntax, but better protection, deeper static analysis, visual tooling, and a plugin ecosystem that solves real bot development pain.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">This roadmap describes what exists in this repository today and what is still planned. It is not a sales page. Tsundere already has a working CLI, `.yuri` transpilation, Discord wrapper package, command discovery, package optimizer, updater, Linux and Windows platform helpers, local docs, VS Code extension support, protected runtime builds, and distributed runtime foundations. It does not yet have a full parser, a real plugin marketplace, a command graph UI, or production-grade multi-machine orchestration.</p>
+      <p class="mt-4 leading-8 text-slate-600">Use this page to understand direction before contributing. If a feature is listed as shipped, there is source code or a CLI command behind it. If it is listed as experimental, it works in a limited form and needs hardening. If it is listed as planned, do not build production workflows around it yet.</p>
 
-      <section class="mt-10 grid gap-4 md:grid-cols-2">
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Tsundere Protect</h2>
-          <p class="mt-3 text-slate-600">A modular Node.js protection pipeline with profiles for standard, advanced, and maximum builds. Protect should combine obfuscation, string encryption, runtime integrity, build randomization, and fingerprinting.</p>
-          <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="protect.html">Read Protect docs</a>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Discord Intelligence</h2>
-          <p class="mt-3 text-slate-600">Compiler and editor analysis for intents, permissions, role hierarchy, OAuth scopes, Discord API compatibility, deprecations, and migration warnings before deployment.</p>
-          <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="discord-intelligence.html">Read Intelligence docs</a>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Command Visualizer</h2>
-          <p class="mt-3 text-slate-600">A VS Code panel that graphs commands, groups, subcommands, components, modals, handlers, services, and duplicate or dead commands.</p>
-          <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="visualizer.html">Read Visualizer docs</a>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Plugin Marketplace</h2>
-          <p class="mt-3 text-slate-600">A future plugin ecosystem for framework, database, Discord, compiler, and language plugins without bloating the core runtime.</p>
-          <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="plugins.html">Read Plugin docs</a>
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">What This Page Teaches</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Which roadmap items are implemented in the current codebase.</li>
+          <li>Which features are foundations rather than finished product surfaces.</li>
+          <li>Which commands you can run now to verify a feature.</li>
+          <li>Where the relevant source lives for each work area.</li>
+          <li>Which old roadmap claims should be treated as future ideas, not current behavior.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Current Status at a Glance</h2>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Area</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Evidence in Repo</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">CLI workflow</td><td class="px-4 py-3">Shipped foundation</td><td class="px-4 py-3">`src/cli.ts`, `tsundere create`, `install`, `dev`, `build`, `start`, `doctor`, `docs`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Yuri compiler</td><td class="px-4 py-3">Experimental but usable</td><td class="px-4 py-3">`src/compiler/transpile.ts` uses targeted transforms, not a complete parser.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Discord wrapper</td><td class="px-4 py-3">Shipped foundation</td><td class="px-4 py-3">`src/discord`, `packages/discord`, generated local `@tsundere/discord` runtime package.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Package optimizer</td><td class="px-4 py-3">Shipped foundation</td><td class="px-4 py-3">`src/package-optimizer.ts`, `tsundere install`, `store path`, `store prune`, `cache clean`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Tsundere Protect</td><td class="px-4 py-3">Experimental</td><td class="px-4 py-3">`src/compiler/protect.ts`, `tsundere build --protect`, `tsundere fingerprint inspect`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Discord Intelligence</td><td class="px-4 py-3">Partial</td><td class="px-4 py-3">Compiler diagnostics, VS Code completions, type cache metadata. No full dashboard yet.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Command visualizer</td><td class="px-4 py-3">Planned</td><td class="px-4 py-3">Command discovery writes `.yuri-cache/discord.commands.json`; no graph panel implementation yet.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Plugin marketplace</td><td class="px-4 py-3">Interface and install naming only</td><td class="px-4 py-3">`src/plugins.ts` defines interfaces; `tsundere plugin install` maps names to npm/GitHub/local package specs.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Distributed runtime</td><td class="px-4 py-3">Foundation</td><td class="px-4 py-3">`src/distributed`, `tsundere inspect`, `metrics`, `reload`, `stress runtime`, `stress system`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Release updater</td><td class="px-4 py-3">Shipped foundation</td><td class="px-4 py-3">`src/updater.ts`, GitHub latest release checks, self-update tarball install, cron scheduling.</td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Future Ideas</h2>
+        <h2 class="text-2xl font-semibold">What Is Shipped Now</h2>
+        <p class="mt-4 leading-7 text-slate-700">The shipped parts are the features you can verify from a checkout after `npm install` and `npm run build`. These are not necessarily final, but they are real code paths with tests or CLI commands behind them.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">Less Setup, More Building</h3>
-            <p class="mt-2 text-slate-600">A new bot should feel ready in minutes: create the project, add a token, write commands, and run. No deploy-command script maze, no mystery loader folder, no fragile custom ID parsing.</p>
+            <h3 class="font-semibold">Project Lifecycle</h3>
+            <p class="mt-3 leading-7 text-slate-700">`tsundere create`, `install`, `dev`, `build`, `start`, `format`, `lint`, `test`, `docs`, and `doctor` are routed through `src/cli.ts`. Generated projects include `package.json`, `tsundere.config.json`, `.env.example`, `.gitignore`, `src/main.yuri`, and, for Discord templates, `src/commands/ping.yuri`.</p>
           </div>
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">Discord Knowledge in the Tooling</h3>
-            <p class="mt-2 text-slate-600">Tsundere should know Discord limits before runtime: embed sizes, modal inputs, button rows, required intents, permissions, option types, stale command state, and deprecated APIs.</p>
+            <h3 class="font-semibold">Discord Runtime</h3>
+            <p class="mt-3 leading-7 text-slate-700">The bundled wrapper exposes client helpers, intents, embeds, slash command builders, components, interactions, collectors, REST helpers, prefix helpers, and a native runtime bridge. The local project runtime is refreshed into `.tsundere/runtime/discord` during builds and installs.</p>
           </div>
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">Commercial-Grade Builds</h3>
-            <p class="mt-2 text-slate-600">Protected builds should be randomized, fingerprinted, and traceable. The goal is accountability and friction against casual reverse engineering, not impossible security promises.</p>
+            <h3 class="font-semibold">Package Optimizer</h3>
+            <p class="mt-3 leading-7 text-slate-700">Tsundere wraps npm rather than replacing it. The optimizer reads `package-lock.json`, harvests package directories into a store, validates directory hashes before reuse, hydrates with hard links or copies, and writes `tsundere-workspace.yaml` plus `tsundere-lock.yaml` after successful npm operations.</p>
           </div>
           <div class="rounded-lg border border-slate-200 p-5">
-            <h3 class="font-semibold">A Runtime That Feels Real</h3>
-            <p class="mt-2 text-slate-600">Build, start, dev, docs, package updates, version checks, command sync, doctor reports, and diagnostics should all live behind one clean CLI.</p>
+            <h3 class="font-semibold">Local Docs and Tests</h3>
+            <p class="mt-3 leading-7 text-slate-700">Local docs live under `docs/local`. The repo now includes `npm run docs:check`, unit tests under `tests`, runtime stress tests, and system stress tests that exercise compiler, package, platform, updater, and distributed runtime surfaces.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Experimental Foundations</h2>
+        <p class="mt-4 leading-7 text-slate-700">Experimental means the feature exists, but the page should not make it sound complete. These items are useful for local projects and testing, but they need more design, stronger parsing, broader tests, or better packaging before they become stable promises.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Tsundere Protect</h3>
+            <p class="mt-3 leading-7 text-slate-700">`protectJavaScript` strips comments and source map comments, encodes static strings, adds a build ID, injects guard code for advanced and maximum profiles, and emits `.tsundere/runtime-build/tsundere-protect.json`. It is protection against casual inspection, not a security boundary.</p>
+            <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="protect.html">Read Protect docs</a>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Discord Intelligence</h3>
+            <p class="mt-3 leading-7 text-slate-700">The compiler already warns about some intents, message content, permissions, embed limits, and custom ID limits. The VS Code extension contributes Discord completions, hovers, snippets, and type sync. A unified intelligence dashboard is still future work.</p>
+            <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="discord-intelligence.html">Read Intelligence docs</a>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Distributed Runtime</h3>
+            <p class="mt-3 leading-7 text-slate-700">Runtime planning, local IPC, global events, memory cache, singleton tasks, Prometheus metrics, Grafana export, inspect output, and stress reports exist. Real multi-process or multi-machine orchestration is not finished.</p>
+            <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="cli.html">Read CLI runtime docs</a>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Type Bridge</h3>
+            <p class="mt-3 leading-7 text-slate-700">`tsundere types sync` extracts Discord type metadata and writes JSON files in `.yuri-cache`. The VS Code extension can trigger sync when package files change. This is useful, but not yet a complete language server type system.</p>
+            <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="discord.html">Read Discord docs</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Planned Work</h2>
+        <p class="mt-4 leading-7 text-slate-700">These items are on the roadmap because the codebase has the first pieces or a clear reason to need them, but they should not be documented as available commands unless the implementation lands.</p>
+        <div class="mt-4 space-y-4">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">A Real Parser and AST Pipeline</h3>
+            <p class="mt-3 leading-7 text-slate-700">`src/compiler/transpile.ts` is still regex and block-transform heavy. A full parser would make Yuri syntax more predictable, improve diagnostics, support better formatting, and reduce surprising lowering edge cases.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Command Visualizer</h3>
+            <p class="mt-3 leading-7 text-slate-700">Command discovery already writes route metadata. The planned visualizer should use that data, plus component and modal metadata, to show command graphs and duplicate or stale command warnings in the editor. There is no VS Code graph panel yet.</p>
+            <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="visualizer.html">Read Visualizer roadmap</a>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Plugin Marketplace</h3>
+            <p class="mt-3 leading-7 text-slate-700">`src/plugins.ts` defines plugin shapes for compiler, language server, lint, CLI, and generators. The CLI can map plugin names to npm package names or accept package specs. A searchable registry, marketplace UI, and loaded plugin execution pipeline are not complete.</p>
+            <a class="mt-4 inline-flex text-sm font-semibold text-pink-700" href="plugins.html">Read Plugin roadmap</a>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Release Trust and Installer Hardening</h3>
+            <p class="mt-3 leading-7 text-slate-700">The updater can download and install CLI tarballs, and release scripts can assemble artifacts. Audit notes still call out checksum or signature verification, stronger path guards in installer scripts, and safer release deletion behavior as remaining work.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Commands That Prove Current Behavior</h2>
+        <p class="mt-4 leading-7 text-slate-700">Run these from a source checkout after dependencies are installed. They verify the current foundations without requiring Discord credentials.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>npm run build
+npm run test:unit
+npm run docs:check
+npm run stress:runtime
+npm run stress:system
+node dist/cli.js doctor
+node dist/cli.js inspect
+node dist/cli.js metrics doctor
+node dist/cli.js updater self --dry-run</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`updater self --dry-run` still needs network access and a release with a valid CLI tarball. If it cannot read GitHub from your environment, the command should fail cleanly with a network or release-repo message.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Roadmap Misreads</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Protect Is Not DRM</h3>
+            <p class="mt-3 leading-7 text-slate-700">Protected output raises effort for casual inspection and adds traceable fingerprints. It cannot make JavaScript impossible to reverse engineer.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Plugins Are Not Fully Loaded Yet</h3>
+            <p class="mt-3 leading-7 text-slate-700">The interface and install command exist, but the compiler does not yet execute arbitrary plugin hooks across a marketplace registry.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Stress Tests Are Local</h3>
+            <p class="mt-3 leading-7 text-slate-700">`tsundere stress runtime` and `tsundere stress system` exercise local runtime foundations and fixtures. They do not connect to Discord or prove real gateway scaling.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Yuri Is Still Close to JS</h3>
+            <p class="mt-3 leading-7 text-slate-700">The safest production code stays near TypeScript and JavaScript shapes until the parser and language server mature.</p>
           </div>
         </div>
       </section>
 
       <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
-        <h2 class="text-2xl font-semibold text-pink-900">Got an idea?</h2>
-        <p class="mt-3 text-pink-900">If you have a feature idea, Discord workflow pain point, docs request, protection idea, or weird bot use case Tsundere should support, join the Discord and throw it in.</p>
+        <h2 class="text-2xl font-semibold text-pink-900">How to Suggest Roadmap Work</h2>
+        <p class="mt-3 leading-7 text-pink-900">Good roadmap requests include a real bot workflow, the command you wish existed, the source files it would touch, and what failure it would prevent. For Discord problems, include intents, permissions, package versions, and a small `.yuri` sample. For compiler work, include the current emitted output and the output you expected.</p>
         <a class="mt-4 inline-flex rounded-md bg-pink-600 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-700" href="https://discord.gg/Gpxj5xVXBZ">Join the Discord</a>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <div class="mt-4 grid gap-3 md:grid-cols-2">
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="protect.html">Tsundere Protect</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="discord-intelligence.html">Discord Intelligence</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="visualizer.html">Command Visualizer</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="plugins.html">Plugin Marketplace</a>
+        </div>
       </section>
     </main>
   </div>

@@ -14,6 +14,7 @@ import { commandExists, currentPlatform, ensureExecutable, ensureTsunderePaths, 
 import { compareVersions, configureDailyUpdateCheck, latestRelease, securityUpdateNotice, selfUpdate } from "./updater.js";
 import { createDistributedRuntime, createRuntimePlan, exportGrafanaDashboard, prometheusMetrics, runRuntimeStressTest, serveMetrics, type RuntimeStressReport } from "./distributed/index.js";
 import { resolveInside } from "./security/path-safety.js";
+import { runSystemStressTest, type SystemStressReport } from "./stress/system.js";
 
 const [, , command = "help", ...args] = process.argv;
 const cliRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -202,11 +203,38 @@ async function reload(): Promise<number> {
 
 async function stress(args: string[]): Promise<number> {
   const action = args[0] ?? "runtime";
-  if (action !== "runtime") {
-    throw new Error("Usage: tsundere stress runtime [--heavy] [--json] [--iterations 25000] [--shards 32] [--workers auto] [--cache-entries 10000] [--tasks 100] [--metrics-samples 100] [--payload-bytes 256]");
+  if (action !== "runtime" && action !== "system") {
+    throw new Error("Usage: tsundere stress [runtime|system] [--heavy] [--json] [--iterations 25000] [--shards 32] [--workers auto] [--cache-entries 10000] [--tasks 100] [--metrics-samples 100] [--payload-bytes 256]");
   }
   const heavy = args.includes("--heavy");
   const config = await loadConfig();
+  if (action === "system") {
+    const report = await runSystemStressTest(config, {
+      runtime: {
+        iterations: readNumberFlag(args, "--iterations") ?? (heavy ? 250_000 : 25_000),
+        shards: readNumberFlag(args, "--shards") ?? (heavy ? 128 : 32),
+        workers: readWorkerFlag(args, "--workers") ?? "auto",
+        cacheEntries: readNumberFlag(args, "--cache-entries") ?? (heavy ? 75_000 : 10_000),
+        taskExecutions: readNumberFlag(args, "--tasks") ?? (heavy ? 500 : 100),
+        metricsSamples: readNumberFlag(args, "--metrics-samples") ?? (heavy ? 500 : 100),
+        payloadBytes: readNumberFlag(args, "--payload-bytes") ?? (heavy ? 1024 : 256)
+      },
+      packageCount: readNumberFlag(args, "--packages") ?? (heavy ? 200 : 40),
+      yuriFiles: readNumberFlag(args, "--yuri-files") ?? (heavy ? 120 : 25),
+      commandFiles: readNumberFlag(args, "--commands") ?? (heavy ? 60 : 12),
+      buildRepeats: readNumberFlag(args, "--build-repeats") ?? (heavy ? 4 : 2),
+      packageHydrationRepeats: readNumberFlag(args, "--hydrate-repeats") ?? (heavy ? 4 : 2),
+      updaterChecks: readNumberFlag(args, "--updater-checks") ?? (heavy ? 25 : 5),
+      docsCheck: !args.includes("--no-docs"),
+      keepTemp: args.includes("--keep-temp")
+    }, cliRoot);
+    if (args.includes("--json")) {
+      console.log(JSON.stringify(report, null, 2));
+      return report.status === "fail" ? 1 : 0;
+    }
+    printSystemStressReport(report);
+    return report.status === "fail" ? 1 : 0;
+  }
   const report = await runRuntimeStressTest(config, {
     iterations: readNumberFlag(args, "--iterations") ?? (heavy ? 250_000 : 25_000),
     shards: readNumberFlag(args, "--shards") ?? (heavy ? 128 : 32),
@@ -675,6 +703,8 @@ Usage:
   tsundere reload
   tsundere stress runtime
   tsundere stress runtime --heavy
+  tsundere stress system
+  tsundere stress system --heavy
   tsundere version
   tsundere doctor
   tsundere format
@@ -726,6 +756,24 @@ function printStressReport(report: RuntimeStressReport): void {
   }
   for (const warning of report.warnings) {
     console.log(`  warning: ${warning}`);
+  }
+}
+
+function printSystemStressReport(report: SystemStressReport): void {
+  console.log("Tsundere System Stress Report");
+  console.log(`  status: ${report.status}`);
+  console.log(`  total: ${formatMs(report.durationMs)} for ${formatCount(report.operations)} ops (${formatCount(report.operationsPerSecond)} ops/s)`);
+  console.log(`  memory: ${formatBytes(report.memory.beforeBytes)} -> ${formatBytes(report.memory.afterBytes)} (${formatBytes(report.memory.deltaBytes)})`);
+  console.log(`  temp: ${report.tempRoot}`);
+  for (const check of report.checks) {
+    console.log(`  ${check.status.toUpperCase()} ${check.name}: ${formatMs(check.durationMs)}, ${formatCount(check.operations)} ops, ${formatCount(check.operationsPerSecond)} ops/s`);
+    const details = Object.entries(check.details).map(([key, value]) => `${key}=${value}`).join(", ");
+    if (details) {
+      console.log(`    ${details}`);
+    }
+    for (const warning of check.warnings) {
+      console.log(`    warning: ${warning}`);
+    }
   }
 }
 

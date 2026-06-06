@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -25,11 +25,12 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Examples</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">The example `.yuri` files now live in `docs/examples`. They are documentation assets and runnable compiler samples.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">The example `.yuri` files live in `docs/examples`. They are both learning material and compiler samples: this repository's `tsundere.config.json` points `source` at `docs/examples`, so `npm run build` compiles these examples through the current compiler.</p>
 
       <section class="mt-10">
         <h2 class="text-2xl font-semibold">Example Folder</h2>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>docs/examples/
+  main.yuri
   starter-bot.yuri
   embeds.yuri
   components.yuri
@@ -37,59 +38,72 @@
   modal-flow.yuri
   slash-options.yuri
   typed-router.yuri
+  cache-and-helpers.yuri
+  prefix-utils.yuri
+  rest-commands.yuri
+  sharding-and-gateway.yuri
+  webhook-thread-audit.yuri
+  type-bridge-notes.yuri
   commands/
     ping.yuri
     avatar.yuri
     admin/
       ban.yuri</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The examples are not installed into new projects automatically. Copy the small pattern you need into your own `src` folder. Do not import directly from `docs/examples` in a production bot.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Starter Bot</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents, Slash, Embed } from "@tsundere/discord"
-
-const client = new Client({
-  token: env.DISCORD_TOKEN,
-  intents: [Intents.Guilds, Intents.GuildMessages]
-})
-
-client.once("ready", () => {
-  log(`Online as ${client.user.tag}`)
-})
-
-client.on("interactionCreate", async (interaction) => {
-  if interaction.isCommand("ping") {
-    await interaction.reply({
-      embeds: [
-        Embed.create()
-          .title("Pong")
-          .description(`Latency: ${client.ping}ms`)
-          .color("#ff7ab6")
-          .toJSON()
-      ],
-      ephemeral: true
-    })
-  }
-})
-
-Slash.command("ping")
-  .description("Check bot latency")
-  .register(client)
-
-client.login()</code></pre>
-      </section>
-
-      <section class="mt-10">
-        <h2 class="text-2xl font-semibold">How to Use Examples</h2>
-        <div class="mt-4 space-y-4 text-slate-700">
-          <p>Read examples from `docs/examples` when learning a feature.</p>
-          <p>Copy a small pattern into your own `src` folder instead of importing directly from docs.</p>
-          <p>Run `tsundere build` in this repository to compile the examples configured in `tsundere.config.json`.</p>
+        <h2 class="text-2xl font-semibold">What The Examples Teach</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5"><h3 class="font-semibold">Starter Bot</h3><p class="mt-2 leading-7 text-slate-600">`starter-bot.yuri` shows `Client`, `Intents`, `Slash`, `Embed`, `Button`, `Row`, a `/ping` command, and a button interaction.</p></div>
+          <div class="rounded-lg border border-slate-200 p-5"><h3 class="font-semibold">Embeds and Components</h3><p class="mt-2 leading-7 text-slate-600">`embeds.yuri` and `components.yuri` show builder chaining, rows, buttons, select menus, and `parseCustomId`.</p></div>
+          <div class="rounded-lg border border-slate-200 p-5"><h3 class="font-semibold">Modal and Slash Options</h3><p class="mt-2 leading-7 text-slate-600">`modal-flow.yuri` builds modal payloads, while `slash-options.yuri` demonstrates `requireOption`, `resolveUser`, `resolveRole`, and `resolveChannel`.</p></div>
+          <div class="rounded-lg border border-slate-200 p-5"><h3 class="font-semibold">Typed Router</h3><p class="mt-2 leading-7 text-slate-600">`typed-router.yuri` uses `InteractionRouter`, `Component.define`, `Schema.define`, and `Select.define` for routed interaction handling.</p></div>
+          <div class="rounded-lg border border-slate-200 p-5"><h3 class="font-semibold">Runtime Helpers</h3><p class="mt-2 leading-7 text-slate-600">`cache-and-helpers.yuri`, `prefix-utils.yuri`, `rest-commands.yuri`, and `webhook-thread-audit.yuri` show runtime helpers outside the simplest slash command path.</p></div>
+          <div class="rounded-lg border border-slate-200 p-5"><h3 class="font-semibold">Gateway and Sharding</h3><p class="mt-2 leading-7 text-slate-600">`sharding-and-gateway.yuri` shows `Partials`, `shards: "auto"`, `client.shard(0)`, and gateway error handling.</p></div>
         </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Run The Examples Through The Compiler</h2>
+        <p class="mt-4 leading-7 text-slate-700">From the repository root, the project config already points at `docs/examples`, with command discovery under `docs/examples/commands`. That means the normal build and command sync commands exercise the example set.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>npm run build
+node dist/cli.js commands sync
+node dist/cli.js build</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`npm run build` builds the CLI itself. `node dist/cli.js build` then uses the built CLI to compile the examples. If you are using an installed CLI instead of source, run `tsundere build` from the repository root after installing dependencies.</p>
+        <p class="mt-4 leading-7 text-slate-700">Command discovery reads only `docs/examples/commands` in this repository config. That means files such as `docs/examples/commands/ping.yuri`, `docs/examples/commands/avatar.yuri`, and `docs/examples/commands/admin/ban.yuri` are used for `.yuri-cache/discord.commands.json`. The top-level example files are still compiled, but they are not command-discovery entries unless the config changes.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Syntax Style In Examples</h2>
+        <p class="mt-4 leading-7 text-slate-700">Some examples intentionally use Tsundere's current syntax lowering, such as `if interaction.isCommand("ping") { ... }`. That is valid for the current compiler, but the safest style for beginners remains close to JavaScript and TypeScript. If a copied example behaves strangely, simplify the shape before assuming the runtime is broken.</p>
+        <p class="mt-4 leading-7 text-slate-700">Several examples call real Discord login through `client.login()`. Do not run them against Discord until `DISCORD_TOKEN` is set and the bot intents match the example. For compiler-only learning, build the examples without starting them.</p>
+        <p class="mt-4 leading-7 text-slate-700">Examples that construct modals, components, or router definitions can be useful even if you do not run the full file. Copy the builder pattern, then place it inside your own command or interaction handler. For example, you might copy the `TextInput.paragraph(...).length(10, 1000)` pattern from `modal-flow.yuri` without copying the whole feedback command.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Compile-Only Versus Runtime Examples</h2>
+        <p class="mt-4 leading-7 text-slate-700">A compile-only example is useful for checking the compiler, generated JavaScript, or docs pattern. A runtime example is something you actually start with Discord credentials. Most files in `docs/examples` import `@tsundere/discord` and call `client.login()`, so they become runtime examples if you execute the generated output.</p>
+        <p class="mt-4 leading-7 text-slate-700">Before running one, check three things: the token source, the intents, and the Discord permissions. `slash-options.yuri` needs guild/member context. `sharding-and-gateway.yuri` uses `GuildMembers` and `GuildVoiceStates`. Moderation command examples may need role hierarchy and permissions that a fresh bot invite does not have.</p>
+        <p class="mt-4 leading-7 text-slate-700">For safe experimentation, create a fresh project with the Discord template, copy one example concept into `src/main.yuri` or `src/commands`, run `tsundere install`, then use `tsundere dev`. That isolates the example from the repository's docs build config and makes the generated output easier to inspect.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Common Example Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Copying an entire example when you only need one small interaction pattern.</li>
+          <li>Running Discord examples without setting `DISCORD_TOKEN`.</li>
+          <li>Forgetting required intents such as `GuildMembers`, `GuildMessages`, `MessageContent`, or `GuildVoiceStates`.</li>
+          <li>Assuming examples are full applications with persistence, permissions, and deployment hardening.</li>
+          <li>Editing docs examples and forgetting that the repository build compiles them.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="templates.html">Templates</a>, <a class="text-pink-700 underline" href="discord.html">Discord Guide</a>, <a class="text-pink-700 underline" href="yuri-files.html">.yuri Files</a>, <a class="text-pink-700 underline" href="cli.html">CLI and Runtime</a></p>
       </section>
     </main>
   </div>
 </body>
 </html>
-
-

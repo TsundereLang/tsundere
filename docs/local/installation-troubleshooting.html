@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Installation Troubleshooting - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Installation Troubleshooting</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Most Tsundere setup problems come from four places: Node/npm is not available, the release bundle is incomplete, the local Discord runtime package is missing, or platform permissions/path lookup are failing.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Start With Doctor</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere doctor</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Doctor prints the project name, source, output, target, strict mode, platform, Tsundere home/config/cache/log paths, Node/npm availability, Linux executable checks when relevant, and package optimizer store status. If npm is missing, install or repair Node before debugging Tsundere.</p>
+        <p class="mt-4 leading-7 text-slate-700">Run doctor from the project root when debugging a project. The command loads the config in the current directory, so running it from your home folder can show default config instead of the bot you are trying to fix. If doctor says `source: src` but your project uses a different folder, either change directory or update `tsundere.config.json`.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">`@tsundere/discord` Cannot Resolve</h2>
+        <p class="mt-4 leading-7 text-slate-700">New projects depend on `@tsundere/discord` through `file:.tsundere/runtime/discord`. If that local package folder is missing or stale, Node cannot resolve the import.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere runtime install
+tsundere install</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`runtime install` forces the local runtime package manifest into place. `install` lets npm install the file dependency and lets Tsundere repair optimizer metadata.</p>
+        <p class="mt-4 leading-7 text-slate-700">If this still fails, open `package.json` and confirm the dependency points to `file:.tsundere/runtime/discord`. Then check that `.tsundere/runtime/discord/package.json` exists and has `"name": "@tsundere/discord"`. If you are working from a source checkout of the CLI, run `npm run build` in the CLI repository so `dist/discord` exists before trying to create or repair projects.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Release Installer Cannot Find `tsundere-cli.tgz`</h2>
+        <p class="mt-4 leading-7 text-slate-700">Both web installer scripts search the downloaded release contents for `tsundere-cli.tgz`. If the latest release only contains source code or missing assets, the installer cannot complete. Use a release built by `npm run dist:release`, or install from source while the release is repaired.</p>
+        <p class="mt-4 leading-7 text-slate-700">This is a release packaging problem, not a local bot problem. The installer has already reached GitHub and downloaded something; it just did not find the asset layout it expects. Check the GitHub release attached files before changing project code. If you are preparing a release, make sure the generated tarball is attached to the release that the installer resolves as latest.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">`tsundere` Command Not Found</h2>
+        <p class="mt-4 leading-7 text-slate-700">This usually means npm installed the package somewhere that is not on PATH, or the terminal was opened before the PATH changed. Reopen the terminal first. Then check where npm puts global binaries.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>npm prefix -g
+npm bin -g</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">On Windows, the command may resolve through a `.cmd` shim. On Linux and macOS it should be an executable file. If you installed from source but only ran `node dist/cli.js`, you did not install a global `tsundere` command; either use the node command while developing or install/link the package intentionally.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Cache or Store Looks Broken</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere store path
+tsundere store prune
+tsundere cache clean</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The optimizer validates stored package metadata and directory hashes before reuse. `store prune` removes unreferenced or invalid entries inside the configured store. `cache clean` removes the store and recreates it. Neither command should delete project source files.</p>
+        <p class="mt-4 leading-7 text-slate-700">Use `store prune` first when the store is merely stale. Use `cache clean` when you want to force a full rebuild of the Tsundere store. After cleaning, the next `tsundere install` may be slower because packages have to be harvested again from npm-installed `node_modules`.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Windows and Linux Notes</h2>
+        <p class="mt-4 leading-7 text-slate-700">On Windows, npm and pnpm commands resolve through `.cmd` shims. On Linux and macOS, command lookup uses `sh -c command -v`. On Linux, doctor also checks executable permissions for scripts such as `scripts/install-linux.sh` and `dist/cli.js` when they exist.</p>
+        <p class="mt-4 leading-7 text-slate-700">For Windows, avoid running projects from protected locations and be careful with OneDrive paths if file watching behaves strangely. For Linux, `permission denied` usually means the script exists but is not executable, or the directory is mounted with restrictive options. Doctor tries to apply executable bits where it can, and Linux-specific errors include chmod guidance.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Reinstall Dependencies</h2>
+        <p class="mt-4 leading-7 text-slate-700">Re-run `tsundere install` after editing dependencies, switching branches, deleting `.tsundere/runtime/discord`, cleaning the Tsundere store, or pulling changes that alter package files. Re-run plain `npm install` only when you intentionally want to bypass Tsundere's optimizer layer for diagnosis. If plain npm works but `tsundere install` does not, the issue is likely in the optimizer or local runtime repair step.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="windows-setup.html">Windows Setup</a>, <a class="text-pink-700 underline" href="linux-setup.html">Linux Setup</a>, <a class="text-pink-700 underline" href="installation.html">Installation</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

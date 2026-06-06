@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reading Release Notes - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Reading Release Notes</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Release notes matter because Tsundere changes quickly. Updates can affect the compiler, the bundled Discord runtime, installer assets, the VS Code extension, package optimizer behavior, and the updater itself.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Where Notes Live</h2>
+        <p class="mt-4 leading-7 text-slate-700">The repo includes `updates.md` for Discord-friendly project updates and `docs/local/updates.html` for local docs readers. GitHub releases are the source used by the updater command. The updater reads the latest release tag, release page URL, assets, and body text from GitHub.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere updater info</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The release notes you read should match the install path you use. `updates.md` can explain ongoing project work, but the updater can only install what is attached to a GitHub release. If a note says a CLI release is available, verify that the release has an installable tarball asset before telling users to run the updater.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What To Look For</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>CLI tarball asset names such as `tsundere-cli-0.1.1.tgz` or `tsundere-cli.tgz`.</li>
+          <li>Compiler changes that may affect `.yuri` syntax lowering.</li>
+          <li>Discord runtime changes, especially around gateway login, interactions, components, role helpers, and command sync.</li>
+          <li>Installer changes for Windows, Linux, WSL, VS Code, Cursor, or Antigravity.</li>
+          <li>Security update language. The CLI can show a security update notice when release text includes security-related keywords.</li>
+        </ul>
+        <p class="mt-4 leading-7 text-slate-700">Also look for migration notes. A change to `tsundere.config.json` defaults, `.yuri` lowering, package optimizer lock snapshots, or the local Discord runtime can require project cleanup even when the CLI update itself succeeds. Good release notes should tell you whether to rerun `tsundere install`, `tsundere runtime install`, `tsundere commands sync`, or a clean build.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Before Updating a Bot</h2>
+        <p class="mt-4 leading-7 text-slate-700">For serious bots, read the release notes before running `tsundere updater self --yes`. Then update in a test copy of the project, run install, build, command sync, and dev/start smoke checks.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere install
+tsundere build
+tsundere commands sync
+tsundere doctor</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">If the release touches Discord runtime behavior, also run the bot in `tsundere dev` and test at least one slash command, one interaction reply, and any role or welcome flows your bot depends on. If the release touches package management, compare npm's `package-lock.json` with Tsundere's YAML snapshots after install.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">How The Updater Chooses Assets</h2>
+        <p class="mt-4 leading-7 text-slate-700">The updater prefers a versioned tarball such as `tsundere-cli-0.1.1.tgz`, then falls back to `tsundere-cli.tgz`, then any asset matching `tsundere-cli*.tgz`. That means release asset names are not cosmetic. A release can have beautiful notes and still be impossible for `tsundere updater self` to install if the asset name is wrong.</p>
+        <p class="mt-4 leading-7 text-slate-700">Version comparison is simple numeric dot comparison after trimming a leading `v`. Pre-release naming should be tested carefully because the updater is optimized for stable tags such as `v0.1.1`. Use `tsundere updater self --dry-run` to prove selection before recommending an update publicly.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Incomplete or Broken Releases</h2>
+        <p class="mt-2 leading-7 text-amber-950">If a release is missing `tsundere-cli.tgz` or a versioned CLI tarball, `tsundere updater self` reports that the latest release is missing a CLI tarball asset. In that case, wait for a corrected release or install from a verified source checkout.</p>
+        <p class="mt-4 leading-7 text-amber-950">Do not fix a broken release by changing project code. Fix the release layout, attach the expected artifacts, and publish a corrected release. Project-level commands cannot create missing GitHub release assets.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="updating-tsundere.html">Updating Tsundere</a>, <a class="text-pink-700 underline" href="updates.html">Updates</a>, <a class="text-pink-700 underline" href="joining-community.html">Joining The Community</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

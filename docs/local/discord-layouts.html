@@ -25,80 +25,67 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Discord Layouts</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere keeps familiar JavaScript-shaped expressions, but Discord projects are organized around clean files, command discovery, typed builders, and interaction helpers. You do not need a giant manual command loader.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere does not require one folder structure, but the CLI template and command discovery are built around a small `src/main.yuri` file and discoverable command files under `src/commands`.</p>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Recommended Project Layout</h2>
+        <h2 class="text-2xl font-semibold">Recommended Shape</h2>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>src/
   main.yuri
+  commands/
+    ping.yuri
+    admin/
+      ban.yuri
   events/
     ready.yuri
     interactionCreate.yuri
-    guildMemberAdd.yuri
-  commands/
-    ping.yuri
-    avatar.yuri
-    admin/
-      ban.yuri
   components/
-    confirmButton.yuri
-  modals/
-    reportModal.yuri
+    banButton.yuri
   services/
-    users.yuri
-    github.yuri</code></pre>
+    members.yuri</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Only `src/main.yuri` and `src/commands/ping.yuri` are created by the Discord starter today. The other folders are a recommended structure for real bots as they grow. Start small, then split events, components, and services when the main file becomes hard to scan.</p>
       </section>
 
       <section class="mt-10">
         <h2 class="text-2xl font-semibold">Main File</h2>
-        <p class="mt-3 text-slate-600">Keep `main.yuri` small. Create the client, register shared event handlers, then login.</p>
+        <p class="mt-3 text-slate-600">Keep `main.yuri` responsible for creating the client, wiring handlers, and logging in. The compiler reads from `src` by default and emits runtime output into `.tsundere/runtime-build`.</p>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents } from "@tsundere/discord"
-import { registerReadyEvent } from "./events/ready"
-import { registerInteractionEvents } from "./events/interactionCreate"
+import { registerReady } from "./events/ready"
+import { registerInteractions } from "./events/interactionCreate"
 
 const client = new Client({
   token: env.DISCORD_TOKEN,
   intents: [
     Intents.Guilds,
-    Intents.GuildMembers,
     Intents.GuildMessages,
     Intents.MessageContent
   ]
 })
 
-registerReadyEvent(client)
-registerInteractionEvents(client)
+registerReady(client)
+registerInteractions(client)
 
-client.login()</code></pre>
-      </section>
-
-      <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Event Files</h2>
-        <p class="mt-3 text-slate-600">Events are normal code. YuriLS should autocomplete event names, callback params, required intents, and common mistakes.</p>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>export function registerReadyEvent(client) {
-  client.once("ready", () => {
-    log(`Online as ${client.user.tag}`)
-  })
-}</code></pre>
+await client.login()</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The compiler preserves normal imports and exports, then adds `.js` extensions during runtime emission. That means `./events/ready` in source can become `./events/ready.js` in `.tsundere/runtime-build`. Keep imports relative to source files and let the runtime emitter handle Node's ESM extension requirements.</p>
       </section>
 
       <section class="mt-10">
         <h2 class="text-2xl font-semibold">Command Files</h2>
-        <p class="mt-3 text-slate-600">Command files export command definitions. `tsundere dev` and `tsundere commands sync` discover them from `src/commands`.</p>
+        <p class="mt-3 text-slate-600">Command discovery scans `.yuri` files in the configured command directory. It reads `Slash.command("name")` and `.description("text")`, then writes `.yuri-cache/discord.commands.json` when you run `tsundere dev` or `tsundere commands sync`.</p>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Slash } from "@tsundere/discord"
 
-export default Slash.command("avatar")
-  .description("Show a user's avatar")
-  .option("user", "target", "User to inspect", { required: false })</code></pre>
+export default Slash.command("ping")
+  .description("Check whether the bot is online")</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Discovery reads source text. It does not execute modules, import your command files, or evaluate variables. Literal builder calls are the easiest path: `Slash.command("ping")` and `.description("...")`. Dynamic command names may work at runtime if you import and register them yourself, but the manifest generator will not infer them.</p>
+        <p class="mt-4 leading-7 text-slate-700">The generated manifest records `generatedAt`, the resolved command directory, and each command's file, name, description, group, route, and routeBased flag. Use it as a local metadata file for tooling, not as a replacement for Discord command registration.</p>
       </section>
 
       <section class="mt-10">
         <h2 class="text-2xl font-semibold">Route-Based Commands</h2>
-        <p class="mt-3 text-slate-600">Route-based commands are configurable. You can make folders become command groups, or disable that and use names from each command file.</p>
+        <p class="mt-3 text-slate-600">With `routeBased: true`, a file path such as `src/commands/admin/ban.yuri` becomes the route `admin ban`. With `routeBased: false`, the command name comes from the command metadata or the file name.</p>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
   "commands": {
     "discovery": true,
-    "routeBased": false,
+    "routeBased": true,
     "directory": "./src/commands",
     "groups": {
       "./src/commands/admin": {
@@ -108,24 +95,42 @@ export default Slash.command("avatar")
     }
   }
 }</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Group overrides are matched by checking whether a command file path starts inside the configured group folder. Path safety helpers resolve those folders inside the project before walking files. If a group is not being applied, check the folder path in `tsundere.config.json` and inspect `.yuri-cache/discord.commands.json` after running `tsundere commands sync`.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Interaction Router Style</h2>
-        <p class="mt-3 text-slate-600">You can still use raw `interactionCreate`, but larger bots should route commands, components, modals, and selects into separate handlers.</p>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on("interactionCreate", async (interaction) => {
-  if interaction.isCommand("ping") {
-    await pingHandler(interaction)
-  }
+        <h2 class="text-2xl font-semibold">Router Style</h2>
+        <p class="mt-3 text-slate-600">The runtime exports `InteractionRouter` and a shared `router`. A router can bind to the client and route command names, typed components, modals, and selects from one `interactionCreate` listener.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Component, router } from "@tsundere/discord"
 
-  if interaction.isButton("confirm") {
-    await confirmHandler(interaction)
-  }
+const BanButton = Component.define&lt;{ userId: string }&gt;("ban")
 
-  if interaction.isModal("report") {
-    await reportHandler(interaction)
-  }
-})</code></pre>
+router
+  .command("ping", async (ctx) => {
+    await ctx.reply({ content: "pong" })
+  })
+  .button(BanButton, async (ctx) => {
+    await ctx.reply({ content: `Ban ${ctx.data.userId}` })
+  })
+  .bind(client)</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`InteractionRouter` is useful when you want one central interaction listener. It routes by `interaction.commandName` for slash commands and by parsed custom ID namespace for buttons, modals, and selects. The shared `router` export is a convenience instance; larger projects may prefer creating their own router instances for tests or separate modules.</p>
+        <p class="mt-4 leading-7 text-slate-700">For typed buttons, route data comes from the encoded custom ID. For modals and selects, the current runtime has basic routing hooks, but modal field parsing is still minimal. Test those flows carefully and keep the data model simple until the typed modal/select APIs mature.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Split Files</h2>
+        <p class="mt-3 text-slate-600">Split files when a command, event, or service has its own state or tests. Keep shared Discord logic in services and export small registration functions from event files. The compiler preserves normal import/export syntax, so source files can reference each other with standard relative imports.</p>
+        <p class="mt-4 leading-7 text-slate-700">Good split points are command handlers, interaction routers, role utilities, configuration loaders, and API clients. Avoid splitting every tiny helper on day one; too many files can make the beginner loop harder. The goal is to keep `main.yuri` boring: create the client, bind handlers, and login.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Layout Troubleshooting</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>If imports fail at runtime, check the source import path and confirm the generated `.js` file exists under `.tsundere/runtime-build`.</li>
+          <li>If command discovery misses a command, keep the command name and description literal or inspect the configured command directory.</li>
+          <li>If a route group looks wrong, run `tsundere commands sync` and read `.yuri-cache/discord.commands.json`.</li>
+          <li>If the main file grows too large, move business logic into services before moving basic client startup code.</li>
+        </ul>
       </section>
     </main>
   </div>

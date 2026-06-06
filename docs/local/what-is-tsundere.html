@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What Is Tsundere - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">What Is Tsundere?</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere is a Discord-focused `.yuri` language toolchain and CLI. It compiles `.yuri` files into JavaScript or TypeScript, bundles a local Discord wrapper, and gives projects a workflow around npm, command discovery, local docs, runtime output, and update checks.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What the Repo Actually Contains</h2>
+        <p class="mt-4 leading-7 text-slate-700">The main package is `@tsundere/cli`. Its executable is `dist/cli.js`, built from `src/cli.ts`. The compiler lives in `src/compiler`, the Discord wrapper source lives in `src/discord`, platform helpers live in `src/platform`, package optimization lives in `src/package-optimizer.ts`, and local docs live in `docs/local`.</p>
+        <p class="mt-4 leading-7 text-slate-700">There are also package folders for the generated Discord runtime, YuriLS, VS Code support, and testing helpers: `packages/discord`, `packages/yurils`, `packages/vscode-tsundere`, and `packages/testing`. The project is moving toward a cleaner package split, but today the CLI still imports many modules from `src` directly.</p>
+        <p class="mt-4 leading-7 text-slate-700">The repository is not just one feature. It includes a CLI, compiler, runtime bridge, package manager layer, updater, installers, local docs, VS Code extension package, Discord examples, and tests. That breadth is why the Getting Started docs focus on workflows instead of only syntax. A beginner needs to know where source ends and generated runtime begins.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What Tsundere Does Well Today</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>Creates starter projects with `tsundere create my-bot --template discord`.</li>
+          <li>Compiles `.yuri` from `src` into `build`, then emits runnable JavaScript into `.tsundere/runtime-build`.</li>
+          <li>Installs `@tsundere/discord` as a local file dependency from `.tsundere/runtime/discord`.</li>
+          <li>Wraps npm install/update/remove while preserving `package-lock.json` and normal Node resolution.</li>
+          <li>Writes Tsundere YAML snapshots: `tsundere-workspace.yaml` and `tsundere-lock.yaml`.</li>
+          <li>Discovers commands under `src/commands` and writes `.yuri-cache/discord.commands.json`.</li>
+          <li>Provides `tsundere doctor`, `tsundere docs`, `tsundere updater`, `tsundere metrics`, and `tsundere stress runtime`.</li>
+        </ul>
+        <p class="mt-4 leading-7 text-slate-700">The most mature path today is a local Discord project. The starter template, runtime bridge, command discovery, interaction helpers, and tests are all oriented around that. The package optimizer and Linux/platform work are useful outside Discord too, but the docs should be honest that Discord bot development is the primary target right now.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What Is Still Experimental</h2>
+        <p class="mt-4 leading-7 text-slate-700">The `.yuri` compiler currently uses a set of targeted syntax-lowering passes. It supports useful TypeScript-like and Discord-focused patterns, but it is not yet a complete language parser with full type checking. If you write ordinary JavaScript-like code, imports, functions, object calls, and Discord wrappers are the safest path.</p>
+        <p class="mt-4 leading-7 text-slate-700">The distributed runtime work is also a foundation. Commands like `tsundere inspect`, `tsundere metrics doctor`, and `tsundere stress runtime` exist. Local IPC, event, cache, task, Prometheus, and Grafana helpers exist. Fully automated multi-machine Discord clustering is not finished yet, so production bots should still be tested carefully.</p>
+        <p class="mt-4 leading-7 text-slate-700">Some docs pages outside Getting Started describe roadmap or planned systems. Treat those as direction, not guaranteed current behavior. When you need the current truth, check the CLI help, the source modules, and tests. These Getting Started pages are written from those implementation files.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Where Tsundere Fits In A Node Project</h2>
+        <p class="mt-4 leading-7 text-slate-700">A Tsundere project still has `package.json`, `package-lock.json`, `node_modules`, npm scripts, and normal Node module resolution. Tsundere adds `.yuri` source and an opinionated CLI around building and running that source. The optimizer can reuse package files across projects, but it does not replace npm and does not ask you to abandon npm lockfiles.</p>
+        <p class="mt-4 leading-7 text-slate-700">For a Discord bot, Tsundere also adds `@tsundere/discord`, which is installed from a project-local file dependency. That package is generated by the CLI under `.tsundere/runtime/discord` and backed by the CLI's built Discord wrapper files. If that folder is missing, the bot will not resolve Tsundere's Discord import until you repair it with `tsundere runtime install` or `tsundere install`.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Misunderstandings</h2>
+        <div class="mt-4 space-y-4 text-slate-700">
+          <p><strong>Tsundere is not pnpm.</strong> `tsundere install` still uses npm and preserves npm lockfile behavior. The store layer is an optimization around npm, not a replacement.</p>
+          <p><strong>Tsundere is not a complete bot framework.</strong> It does not ship economy, tickets, moderation packs, or dashboards as prebuilt systems. It gives you a cleaner way to build your own.</p>
+          <p><strong>Tsundere is not separate from Node.</strong> The runtime is a Node-based runtime with Tsundere branding and generated output. You still need Node.js and npm.</p>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="yuri-files.html">.yuri Files</a>, <a class="text-pink-700 underline" href="project-structure.html">Project Structure</a>, <a class="text-pink-700 underline" href="cli.html">CLI and Runtime</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

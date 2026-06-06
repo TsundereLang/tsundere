@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windows Setup - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Windows Setup</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Windows support is first-class in the CLI path handling. npm and pnpm are invoked through `.cmd` shims, local Tsundere storage is under your home directory, and the release installer is PowerShell-based.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Prerequisites</h2>
+        <p class="mt-4 leading-7 text-slate-700">Install Node.js with npm enabled. Then open a new PowerShell window and confirm both commands are available:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>node --version
+npm --version</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The platform layer maps `npm`, `pnpm`, and `npx` to `.cmd` on Windows. Command lookup uses `where.exe`. Opening docs uses `cmd.exe /c start`.</p>
+        <p class="mt-4 leading-7 text-slate-700">Use the same terminal family for install and project work. If you install with Windows PowerShell, create and run projects from Windows paths such as `C:\Users\you\Projects\my-bot`. If you install inside WSL, follow the Linux page and keep the project inside the Linux filesystem. Mixing Windows global npm shims with WSL paths is one of the fastest ways to get confusing resolution errors.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">PowerShell Installer</h2>
+        <p class="mt-4 leading-7 text-slate-700">The script `scripts/install-tsundere-windows.ps1` fetches the latest release metadata, downloads a zip, extracts it to a temporary folder, finds `tsundere-cli.tgz`, checks Node and npm, installs pnpm if missing, installs the CLI globally, optionally installs the editor extension, runs `tsundere help`, and cleans up the temporary folder.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>powershell -ExecutionPolicy Bypass -File scripts/install-tsundere-windows.ps1</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">If PowerShell blocks the script, check execution policy and whether the file came from the internet. If the script cannot find `tsundere-cli.tgz`, the release bundle is missing the CLI package.</p>
+        <p class="mt-4 leading-7 text-slate-700">The script downloads a zip asset from the latest GitHub release when one exists. If the release has no zip asset, it falls back to GitHub's source zipball. That fallback can download source code successfully and still fail later if the release did not include the packaged CLI tarball. For installer issues, always check the release assets before changing local project files.</p>
+        <p class="mt-4 leading-7 text-slate-700">The script also installs pnpm globally if it is missing. Tsundere project installs are npm-first, but the repository and some packaging flows use pnpm-style commands or compatibility fallbacks. If your machine blocks global npm installs, fix npm global permissions or use a Node version manager before rerunning the installer.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Storage Paths</h2>
+        <p class="mt-4 leading-7 text-slate-700">The platform module uses a `.tsundere` folder inside your Windows home directory:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>%USERPROFILE%\.tsundere\
+%USERPROFILE%\.tsundere\config.json
+%USERPROFILE%\.tsundere\cache\
+%USERPROFILE%\.tsundere\store\
+%USERPROFILE%\.tsundere\logs\</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Project-generated files still live inside the project: `.tsundere/runtime/discord`, `.tsundere/runtime-build`, `.yuri-cache`, `build`, and npm files.</p>
+        <p class="mt-4 leading-7 text-slate-700">The global store path can be changed with `storePath` in `tsundere.config.json`, but keep it on a local filesystem when possible. Hard links work only when the store and project are on compatible volumes. If hard links fail, `linkMode: "auto"` falls back to copying. Use `linkMode: "copy"` when you are debugging network drives, removable drives, or security software that blocks link creation.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Running A Project On Windows</h2>
+        <p class="mt-4 leading-7 text-slate-700">After installation, the normal project loop is the same as every other platform:</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere create my-bot --template discord
+cd my-bot
+tsundere install
+tsundere dev</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">If dev mode restarts too often or misses changes, move the project out of aggressively synced folders and try again. The dev watcher has a polling fallback, but the cleanest setup is still a normal local project folder with stable file modification times.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Windows-Specific Problems</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>If `tsundere` is not recognized after global install, close and reopen the terminal so PATH refreshes.</li>
+          <li>If you work inside OneDrive, dev mode may rely on polling more often because recursive watch behavior can be inconsistent.</li>
+          <li>If WSL is involved, prefer the Linux installer inside WSL or the Windows installer from a Windows terminal. Mixing Windows npm with WSL UNC paths is fragile.</li>
+        </ul>
+        <p class="mt-4 leading-7 text-slate-700">For long paths, use a short project root such as `C:\Projects\my-bot`. The code uses `path.resolve`, `path.join`, and Windows-specific path helpers, but Discord bots often add logs, generated files, and nested packages. Short roots make npm and editor tooling less brittle.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="installation.html">Installation</a>, <a class="text-pink-700 underline" href="linux-setup.html">Linux Setup</a>, <a class="text-pink-700 underline" href="installation-troubleshooting.html">Installation Troubleshooting</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

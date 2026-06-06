@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Installation - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <p class="text-sm font-medium text-pink-700">Getting Started</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight">Installation</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere installs as a Node CLI. The command exposed by `package.json` is `tsundere`, pointing to `./dist/cli.js`, so a release install must include built `dist` output and a packaged CLI tarball.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Prerequisites</h2>
+        <p class="mt-4 leading-7 text-slate-700">The CLI doctor checks for Node and npm through `src/platform/index.ts`. npm is required because `tsundere install`, `tsundere add`, `tsundere remove`, `tsundere update`, and the updater self-install all call npm-compatible commands. pnpm is used by the repository workflow, but project installs are npm-first.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>node --version
+npm --version</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Use a modern Node version that can run ES modules and the built TypeScript output. The package currently depends on TypeScript and Discord.js, and the runtime starts projects with `process.execPath`, which means the same Node executable that launched Tsundere is used to launch your generated bot. If your terminal has multiple Node installs, check the version from the same shell where you plan to run `tsundere`.</p>
+        <p class="mt-4 leading-7 text-slate-700">The install should also be run from a normal user account, not from a system directory. Tsundere writes project files in the folder you choose, and global storage under your home directory. Windows, Linux, and macOS all use platform helpers rather than hardcoded paths, but permission problems still happen when a project sits under Program Files, a protected system path, or a locked sync folder.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Install From a Release Bundle</h2>
+        <p class="mt-4 leading-7 text-slate-700">The web installer scripts fetch the latest GitHub release from `https://api.github.com/repos/TsundereLang/tsundere/releases/latest`, download a zip asset or source zipball, find `tsundere-cli.tgz`, and install that tarball globally with npm. The Windows script is `scripts/install-tsundere-windows.ps1`; the Linux script is `scripts/install-tsundere-linux.sh`.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>powershell -ExecutionPolicy Bypass -File scripts/install-tsundere-windows.ps1
+
+sh scripts/install-tsundere-linux.sh</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Those scripts may also offer to install the VS Code/Cursor extension if a `vscode-tsundere-*.vsix` file is present in the release bundle and an editor command is available.</p>
+        <p class="mt-4 leading-7 text-slate-700">A release bundle install is different from cloning the repository. The installer expects release artifacts to already exist: a CLI tarball named like `tsundere-cli.tgz` and, optionally, a VS Code extension package. If you run the installer against a source-only download before release artifacts are attached, the script can download the code but still fail to find the installable CLI package. In that case, use the source checkout steps below or rebuild the release package first.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Install From a Source Checkout</h2>
+        <p class="mt-4 leading-7 text-slate-700">When working directly in this repository, build the CLI first. `npm run build` runs TypeScript and then `scripts/prepare-discord-runtime.mjs`, which copies `dist/discord` into `packages/discord/dist` so the local runtime package is ready.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>npm install
+npm run build
+node dist/cli.js doctor</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">To install globally from a generated CLI tarball, use the release workflow. Do not point beginners at `node dist/cli.js` as a permanent install. That command is fine for local repo development, but normal users should get the `tsundere` binary through npm global install or a release installer.</p>
+        <p class="mt-4 leading-7 text-slate-700">The source checkout route is useful for contributors because it keeps the repo editable. `npm install` creates the repo `node_modules` and `package-lock.json` state. `npm run build` compiles `src/**/*.ts` to `dist` and prepares the bundled Discord runtime. `node dist/cli.js doctor` then proves that the built CLI can load config defaults, detect the platform, create the Tsundere home folders, find Node and npm, and inspect the package optimizer store.</p>
+        <p class="mt-4 leading-7 text-slate-700">If you want the command name while working from source, use your normal npm linking workflow after the build. Remember that linking is a development convenience. If a tester reports an issue with the installer, reproduce with the release bundle, not with a linked checkout, because those paths exercise different code.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Verify the Install</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere version
+tsundere doctor
+tsundere docs</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`tsundere version` prints the installed Tsundere version and the configured GitHub release repo. `tsundere doctor` loads config defaults, checks platform paths, verifies Node and npm, and inspects the package optimizer store. `tsundere docs` opens `docs/local/index.html` from the installed CLI package.</p>
+        <p class="mt-4 leading-7 text-slate-700">A healthy doctor run should show the project name, source directory, output directory, target, strict mode, platform label, Tsundere home, config/cache/log paths, and runtime checks. On Linux it also checks executable permissions for scripts that need them. If the doctor command exits with a non-zero code, read the package optimizer lines near the end; invalid store entries or missing runtime tools are reported there.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Where Installation Writes Files</h2>
+        <p class="mt-4 leading-7 text-slate-700">The CLI package itself is installed by npm wherever your npm global prefix points. Tsundere's own user-level data is separate. The platform module builds paths under your home directory, including `~/.tsundere/config.json`, `~/.tsundere/cache`, `~/.tsundere/store`, and `~/.tsundere/logs`. The package optimizer defaults its global store to that same Tsundere home area unless `storePath` is set in config.</p>
+        <p class="mt-4 leading-7 text-slate-700">Project-level generated files stay inside the project. A Discord project can contain `.tsundere/runtime/discord`, `.tsundere/runtime-build`, `.yuri-cache/discord.commands.json`, `build`, `node_modules`, npm lock files, and Tsundere YAML package snapshots. This split matters for cleanup: `tsundere cache clean` clears the global store, while deleting `build` or `.tsundere/runtime-build` only affects one project.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Installing from a source zip that does not contain `tsundere-cli.tgz`. The installer expects the release bundle to include the CLI tarball.</li>
+          <li>Running `tsundere dev` before `tsundere install`. New projects need dependencies and the local Discord runtime package installed.</li>
+          <li>Using a terminal that cannot find global npm binaries. Reopen the terminal after global install, or check your PATH.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="windows-setup.html">Windows Setup</a>, <a class="text-pink-700 underline" href="linux-setup.html">Linux Setup</a>, <a class="text-pink-700 underline" href="installation-troubleshooting.html">Installation Troubleshooting</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

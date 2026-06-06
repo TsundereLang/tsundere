@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -25,51 +25,93 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Updates</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">This section explains what changed in the current local build and how to apply it to projects.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Updates in Tsundere are split across three real workflows: project package updates, CLI self-updates from GitHub releases, and release bundle publishing for maintainers. This page explains the difference so you do not use a release command when you meant to update a bot dependency.</p>
 
-      <section class="mt-10 rounded-lg border border-slate-200 p-5">
-        <p class="text-sm font-medium text-pink-700">Current update</p>
-        <h2 class="mt-2 text-2xl font-semibold">Linux, package manager, plugins, and Discord tooling</h2>
-        <ul class="mt-4 list-disc space-y-2 pl-6 text-slate-700">
-          <li>Moved the current work onto the `linux-testing` branch after pulling latest from GitHub.</li>
-          <li>Kept the npm-first package optimizer and store commands from upstream.</li>
-          <li>Added `tsundere plugin install` for official plugins, npm packages, local paths, and GitHub links.</li>
-          <li>Pushed the initial `TsundereLang/tsundere-plugins` registry repo.</li>
-          <li>Moved the GitHub snake workflow to `TsundereLang/.github`.</li>
-          <li>Added Windows and Linux web installers to the release bundle.</li>
-          <li>Updated release publishing so it prompts for version and updates existing releases.</li>
-          <li>Added automatic `tsundere updater self --yes` CLI updates from GitHub release tarballs.</li>
-          <li>Added newer Discord component layout builders.</li>
-          <li>Expanded the GitBot prototype with moderation commands, warning storage, welcome config, autorole, and GitHub role sync.</li>
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-2xl font-semibold">The Short Version</h2>
+        <p class="mt-3 leading-7 text-slate-700">Use `tsundere update` for dependencies inside the current project. Use `tsundere updater self --yes` to update the installed Tsundere CLI. Use `npm run dist:release` only when building a Tsundere release bundle from this repository.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere update discord.js
+tsundere updater self --dry-run
+tsundere updater self --yes
+npm run dist:release</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Project Package Updates</h2>
+        <p class="mt-4 leading-7 text-slate-700">Project package updates go through the package optimizer in `src/package-optimizer.ts`. npm still resolves packages and owns `package-lock.json`. Tsundere wraps that npm operation, repairs the local Discord runtime when needed, records install metrics, harvests packages into the store, and writes `tsundere-workspace.yaml` plus `tsundere-lock.yaml` after a successful install/update.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere add zod
+tsundere remove zod
+tsundere update discord.js
+tsundere install</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">This does not update the global Tsundere CLI. It changes dependencies for the project in your current working directory. If `tsundere update` fails, compare it with plain npm behavior only as a diagnostic step. When plain npm succeeds but Tsundere fails, the issue is likely in store hydration, store harvesting, local runtime repair, or Tsundere YAML snapshot generation.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">CLI Release Checks</h2>
+        <p class="mt-4 leading-7 text-slate-700">The updater implementation in `src/updater.ts` reads `https://api.github.com/repos/TsundereLang/tsundere/releases/latest` by default. The repo can be changed with `TSUNDERE_UPDATE_REPO`. Release tags are normalized by trimming a leading `v`, and version comparison is numeric dot comparison.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere version
+tsundere updater check
+tsundere updater info</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">If GitHub cannot be reached, the updater reports that it could not read the latest release. It does not guess and it does not install anything. Network failures, GitHub rate limits, private repository auth problems, and an incorrect repo value can all look similar from the CLI.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Self Update Flow</h2>
+        <p class="mt-4 leading-7 text-slate-700">Self-update selects a CLI tarball asset from the latest release. It prefers a versioned file like `tsundere-cli-0.1.1.tgz`, then `tsundere-cli.tgz`, then any `tsundere-cli*.tgz` asset. Without `--yes`, the command reports the available update and exits without installing. With `--dry-run`, it verifies selection without changing the machine.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere updater self --dry-run
+tsundere updater self --yes
+tsundere updater self --yes --force</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">With `--yes`, the updater downloads the selected tarball to a temporary `tsundere-update-*` folder and runs npm global install on that package. The temporary tarball is removed afterward. If npm global permissions are broken, the updater can find the release and still fail during install.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Automatic Update Checks</h2>
+        <p class="mt-4 leading-7 text-slate-700">Automation checks for updates; it does not silently install them. On Windows, `tsundere updater cron install` creates a Scheduled Task named `Tsundere Daily Update Check`. On Unix-like systems, it edits the current user's crontab with a marked `tsundere updater check` line.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere updater cron install
+tsundere updater cron status
+tsundere updater cron remove
+tsundere updater cron install --time 09:30</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Security update notices are separate. Before commands such as `dev`, `start`, `build`, `install`, `add`, and `update`, Tsundere can check whether the latest release text looks security-related. That result is cached for 24 hours in `~/.tsundere/security-update-cache.json`. Set `TSUNDERE_NO_UPDATE_NOTICE=1` to suppress the notice in automation.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Release Bundle Builds</h2>
+        <p class="mt-4 leading-7 text-slate-700">Maintainers build release artifacts with `scripts/build-distribution.ps1`, exposed as `npm run dist:release`. The script installs dependencies using a local `.npm-cache`, runs the TypeScript build, packs the CLI, packs `packages/discord`, packages the VS Code extension, copies installer scripts, creates installer aliases, calculates checksums, writes `release-manifest.json`, and creates a `Tsundere-v&lt;version&gt;` bundle archive.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>npm run dist:release
+npm run dist:release -- -Version 0.1.1</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The generated `release/` folder can contain `tsundere-cli.tgz`, `tsundere-discord.tgz`, versioned tarballs, `install-tsundere.ps1`, `installer.bat`, `install-tsundere-windows.ps1`, `install-tsundere-linux.sh`, `update-tsundere.ps1`, a VSIX, optional Electron installer EXE, checksums, docs, and the final `.rar` or `.zip` bundle.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Publishing To GitHub</h2>
+        <p class="mt-4 leading-7 text-slate-700">`scripts/create-github-release.ps1` publishes a GitHub release. It can prompt for the repo, version, draft status, and whether to rebuild the bundle first. It writes `release/RELEASE_NOTES.md` using `updates.md`, then uses GitHub CLI when available. If `gh` is not installed, it falls back to GitHub API calls using `GH_TOKEN`, `GITHUB_TOKEN`, or Git Credential Manager credentials.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>powershell -ExecutionPolicy Bypass -File scripts/create-github-release.ps1
+powershell -ExecutionPolicy Bypass -File scripts/create-github-release.ps1 -Version 0.1.1 -DryRun</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The publish script uploads the bundle archive, not every release file individually. If you need `tsundere updater self` to install directly from GitHub release assets, make sure the release also exposes a matching CLI tarball asset or adjust the release layout before recommending self-update. The updater only knows how to install `tsundere-cli*.tgz` assets.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Reading `updates.md`</h2>
+        <p class="mt-4 leading-7 text-slate-700">`updates.md` is Discord-friendly project update copy. It is useful for communicating what changed in a release cycle, but it is not executable state. A bullet in `updates.md` does not prove an installer asset exists, and a release asset does not prove the docs have been updated. Treat release notes, source files, tests, and assets as separate evidence.</p>
+        <p class="mt-4 leading-7 text-slate-700">When a release mentions runtime, package, installer, or GitBot changes, verify the code paths that matter to your project: `tsundere doctor`, `tsundere install`, `tsundere build`, `tsundere commands sync`, `tsundere dev`, and any Discord flows your bot relies on.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">Common Update Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Using `tsundere updater self --yes` when you meant to update `discord.js` in a project.</li>
+          <li>Publishing a release bundle without a `tsundere-cli*.tgz` asset and then expecting self-update to work.</li>
+          <li>Running release scripts from a project folder instead of the Tsundere CLI repository root.</li>
+          <li>Assuming scheduled update checks install updates automatically. They only run `updater check`.</li>
+          <li>Forgetting that installed local docs only update when the CLI package itself is updated.</li>
         </ul>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">How to Update a Project</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere runtime install
-tsundere install
-tsundere build
-tsundere start</code></pre>
-      </section>
-
-      <section class="mt-10">
-        <h2 class="text-2xl font-semibold">How to Build a Release</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>npm run dist:release</code></pre>
-        <p class="mt-4 text-slate-600">Send the generated `release` folder to testers. They can run `installer.bat` or `install-tsundere.ps1`.</p>
-      </section>
-
-      <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Automatic Update Flow</h2>
-        <div class="mt-4 space-y-4 text-slate-700">
-          <p>`tsundere updater self --yes` downloads the newest `tsundere-cli` tarball from GitHub releases and installs it globally with npm.</p>
-          <p>`tsundere updater self --dry-run` checks the selected release and asset without replacing the installed CLI.</p>
-        </div>
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <p class="mt-4 text-slate-700"><a class="text-pink-700 underline" href="updating-tsundere.html">Updating Tsundere</a>, <a class="text-pink-700 underline" href="reading-release-notes.html">Reading Release Notes</a>, <a class="text-pink-700 underline" href="installation-troubleshooting.html">Installation Troubleshooting</a>, <a class="text-pink-700 underline" href="cli.html">CLI and Runtime</a></p>
       </section>
     </main>
   </div>
 </body>
 </html>
-
-
-
-

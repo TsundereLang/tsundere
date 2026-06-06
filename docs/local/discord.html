@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -25,16 +25,18 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Discord Guide</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere is not a bot framework. It gives you typed Discord API bindings, builders, interaction helpers, command registration utilities, diagnostics, and editor intelligence.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere ships a local `@tsundere/discord` bridge that wraps Discord.js with a smaller API surface for `.yuri` projects. It is still Discord.js underneath when you use the real gateway, but your source imports the Tsundere helpers and the compiler emits runnable JavaScript into `.tsundere/runtime-build`.</p>
 
       <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
-        <h2 class="text-2xl font-semibold">Tsundere Is Not a 1:1 Copy</h2>
-        <p class="mt-3 text-slate-700">You can write familiar imports and async code, but Tsundere projects are meant to use cleaner Discord layouts: small `main.yuri` files, command discovery, event files, typed builders, and interaction helpers. Read the layouts page when moving from a raw Discord.js bot.</p>
-        <p class="mt-3"><a class="font-medium text-pink-700" href="discord-layouts.html">Open Discord layouts</a></p>
+        <h2 class="text-2xl font-semibold">What This Layer Provides</h2>
+        <p class="mt-3 text-slate-700">The runtime exports `Client`, `Intents`, `Partials`, builders such as `Slash`, `Embed`, `Button`, `SelectMenu`, `Modal`, `TextInput`, `Row`, Components v2 helpers, interaction helpers, a typed interaction router, cache helpers, REST helpers, prefix parsing, and runtime member role helpers.</p>
+        <p class="mt-3 text-slate-700">It does not replace Discord.js. It keeps the bot code compact while preserving normal Discord token, intent, gateway, REST, and interaction behavior.</p>
+        <p class="mt-3 text-slate-700">When `gateway` is not set to `"mock"`, the client creates a real Discord.js gateway client. When `gateway: "mock"` is used, login emits `ready` without network access, which is how the unit tests exercise runtime behavior safely.</p>
       </section>
 
       <section class="mt-10">
         <h2 class="text-2xl font-semibold">Client Setup</h2>
+        <p class="mt-3 text-slate-600">Create a client with a token and numeric intent values from `Intents`. The real gateway is used by default. Tests and local simulations can pass `gateway: "mock"`.</p>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents } from "@tsundere/discord"
 
 const client = new Client({
@@ -46,78 +48,102 @@ const client = new Client({
   ]
 })
 
-client.login()</code></pre>
+client.once("ready", () => {
+  log(`Online as ${client.user.tag}`)
+})
+
+await client.login()</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The `Client` constructor stores your intents, partials, shard setting, REST client, cache manager, guild manager, and channel manager. If a token is passed in the constructor, `login()` can be called without arguments. If not, pass the token to `login(token)`. Missing tokens throw `Missing Discord token. Pass token to Client or login(token).`</p>
+        <p class="mt-4 leading-7 text-slate-700">Intents are numeric values from the Tsundere `Intents` enum. They are forwarded to Discord.js. Tsundere can warn about missing intents in strict diagnostics, but it cannot enable privileged intents in the Discord Developer Portal for you.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Events</h2>
-        <p class="mt-3 text-slate-600">The extension suggests Discord event names when you type `client.on("`. Selecting an event should provide the callback shape and hover documentation.</p>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on("messageCreate", async (message) => {
-  if (message.author.bot) {
-    return
+        <h2 class="text-2xl font-semibold">Interactions</h2>
+        <p class="mt-3 text-slate-600">`interactionCreate` receives a normalized interaction with narrowing helpers and reply methods. Options can be read from `interaction.options` with helpers such as `string`, `number`, `user`, `channel`, and `role` when Discord provides them.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>client.on("interactionCreate", async (interaction) => {
+  if (interaction.isCommand("ping")) {
+    await interaction.reply({ content: "pong" })
   }
 
-  if (message.content == "!ping") {
-    await message.reply("pong")
+  if (interaction.isButton("ping:again")) {
+    await interaction.reply({ content: "still pong" })
   }
 })</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The normalized interaction includes `id`, `token`, optional `guildId`, `channelId`, `user`, `member`, `guild`, `channel`, `commandName`, `customId`, `options`, and methods for `reply`, `deferReply`, `editReply`, `followUp`, and `deleteReply`. Reply payloads can contain content, embeds, components, attachments, and the current `ephemeral` option.</p>
+        <p class="mt-4 leading-7 text-slate-700">The wrapper converts Tsundere components into Discord API component payloads when replies are sent. Buttons, select menus, and text inputs are normalized into Discord component types. Components v2 helpers are currently represented as structured payload objects and should be tested against Discord behavior before relying on them in a production bot.</p>
       </section>
 
       <section class="mt-10">
         <h2 class="text-2xl font-semibold">Slash Commands</h2>
+        <p class="mt-3 text-slate-600">The `Slash` builder stores command JSON and can register directly through the client REST helper. If the application ID is not known yet, registration waits for the `ready` event.</p>
         <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Slash } from "@tsundere/discord"
 
 export default Slash.command("avatar")
   .description("Show a user's avatar")
-  .option("user", "target", "User to inspect", { required: false })</code></pre>
-        <p class="mt-4 text-slate-600">With command discovery enabled, files in `src/commands` are indexed by `tsundere dev` and `tsundere commands sync`.</p>
+  .option("user", "target", "User to inspect", { required: false })
+  .guildOnly()</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`Slash.option` takes the option type first, then the option name, then the description. Supported option types are `string`, `integer`, `number`, `boolean`, `user`, `channel`, `role`, and `mentionable`. Subcommands and groups are available through `.subcommand(...)` and `.group(...)`.</p>
+        <p class="mt-4 leading-7 text-slate-700">For registration, `Slash.register(client, scope)` calls `registerSlashCommands` with a single command. `registerSlashCommands` writes to either the global command route or a guild route when `scope.guildId` is provided. If the client user is still the runtime placeholder, registration waits for `ready` so it can use the application ID.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Embeds</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>const card = Embed.create()
+        <h2 class="text-2xl font-semibold">Embeds And Components</h2>
+        <p class="mt-3 text-slate-600">Builders expose `toJSON()` so replies can pass Tsundere objects directly. `Embed.validate()` checks common Discord embed limits before you send the payload.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Button, Embed, Row } from "@tsundere/discord"
+
+const embed = Embed.create()
   .title("Status")
   .description("The bot is online")
   .color("#ff7ab6")
   .timestamp()
-  .toJSON()</code></pre>
-        <p class="mt-4 text-slate-600">Tsundere diagnostics warn about Discord limits such as long embed titles, long descriptions, custom ID limits, and common intent mistakes.</p>
+
+const row = Row.of(
+  Button.secondary("ping:again").label("Ping again")
+)
+
+await interaction.reply({
+  embeds: [embed],
+  components: [row]
+})</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">`Embed.validate()` checks title, description, field count, and total text length against Discord embed limits. It returns `{ ok, errors }`; it does not send anything. Use it before replying when user-provided data can make an embed too large.</p>
+        <p class="mt-4 leading-7 text-slate-700">`Row.of(...)` accepts builders with `toJSON()` and creates a row payload. Use rows for buttons, select menus, and text inputs. A link button uses `Button.link(url)` and does not need a custom ID. Non-link buttons need custom IDs because Discord sends those IDs back in interactions.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Typed Components</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Component, Button } from "@tsundere/discord"
+        <h2 class="text-2xl font-semibold">Typed Custom IDs</h2>
+        <p class="mt-3 text-slate-600">`Component.define` serializes small JSON data into a Discord custom ID and enforces the 100 character Discord limit. It returns a button builder, so change style and label on that returned button.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Component } from "@tsundere/discord"
 
 const BanButton = Component.define&lt;{
   userId: string
 }&gt;("ban")
 
-const button = Button.danger(
-  BanButton.create({ userId: member.id })
-).label("Ban")</code></pre>
+const button = BanButton
+  .create({ userId: member.id })
+  .style("danger")
+  .label("Ban")
+
+const data = BanButton.parse(interaction.customId)</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">The serialized ID format is `namespace:base64url-json`. That keeps handler code cleaner, but the data still has to fit inside Discord's 100 character custom ID limit after encoding. Store large state in your database and put only a short ID in the custom ID.</p>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Command Discovery Config</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
-  "commands": {
-    "discovery": true,
-    "routeBased": true,
-    "directory": "./src/commands",
-    "groups": {
-      "./src/commands/admin": {
-        "routeBased": true,
-        "groupName": "admin"
-      }
-    }
-  }
-}</code></pre>
+        <h2 class="text-2xl font-semibold">Runtime Managers</h2>
+        <p class="mt-3 text-slate-600">The client exposes `guilds.fetch`, `channels.fetch`, `guild.members.fetch`, `member.roles.add`, `member.roles.remove`, `member.kick`, and `member.timeout`. In real Discord mode these call Discord.js. In mock/runtime mode they use local runtime objects so tests can run without the network.</p>
+        <p class="mt-4 leading-7 text-slate-700">Mapped gateway events provide plain Tsundere objects rather than raw Discord.js classes. That is why `member.roles.add(roleId)` exists as a method on the normalized member roles object. If you bypass the wrapper and pass raw objects into helper code, check whether the object uses the Tsundere shape or the Discord.js shape before calling methods.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Troubleshooting Discord Runtime Code</h2>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>If login fails immediately, confirm `DISCORD_TOKEN` is present and the token belongs to a bot application.</li>
+          <li>If message content is empty, add `Intents.MessageContent` in code and enable the privileged intent in the Developer Portal when required.</li>
+          <li>If member join events do not fire, add `Intents.GuildMembers` and enable the Server Members intent when Discord requires it.</li>
+          <li>If role helpers fail, confirm the bot has Manage Roles and that its highest role is above the target role.</li>
+          <li>If `@tsundere/discord` cannot resolve, repair the local runtime with `tsundere runtime install` and reinstall dependencies.</li>
+        </ul>
       </section>
     </main>
   </div>
 </body>
 </html>
-
-
-
-
