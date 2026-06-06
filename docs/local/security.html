@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="security.html">Security</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">Security</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Security in Tsundere covers user projects, CLI behavior, package installation, release updates, installers, Discord permissions, and protected builds.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="mt-3 text-slate-700">Tsundere runs in the JavaScript ecosystem, so secure defaults matter. The CLI should not delete user projects, installers should not hide risky changes, updater paths should be validated, logs should redact secrets, and generated Discord code should warn about missing permissions.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Why It Exists</h2>
+        <p class="mt-3 text-slate-700">A language ecosystem earns trust by being predictable. Developers should know what Tsundere writes, what it downloads, how it updates, where it stores caches, and how to report vulnerabilities.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Use These Checks</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Before publishing a release bundle.</li>
+          <li>Before running installers or updater scripts as administrator.</li>
+          <li>Before deploying a bot with elevated Discord permissions.</li>
+          <li>Before enabling protected builds or embedding assets.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Secrets</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>DISCORD_TOKEN=replace-me
+GITHUB_TOKEN=replace-me
+DATABASE_URL=replace-me</code></pre>
+        <p class="mt-4 text-slate-600">Keep secrets in `.env` locally and deployment secret stores in production. Never commit real bot tokens, OAuth secrets, private keys, or webhook URLs.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Safe CLI Behavior</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>`tsundere install` should delegate dependency resolution to npm while validating Tsundere cache reuse.</li>
+          <li>`tsundere store prune` should only remove files inside the configured Tsundere store.</li>
+          <li>`tsundere cache clean` should only remove generated cache directories owned by Tsundere.</li>
+          <li>`tsundere updater` should verify release metadata before replacing global tooling.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Discord Permission Safety</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>guild.members.ban(user)</code></pre>
+        <p class="mt-4 text-slate-600">This operation needs BanMembers permission and can still fail if the target outranks the bot. Tsundere's permission intelligence roadmap warns about required permissions, hierarchy checks, and OAuth scope recommendations.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Updater Checklist</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Fetch releases from the configured GitHub repository.</li>
+          <li>Prefer HTTPS release assets.</li>
+          <li>Show the current and target version before installing.</li>
+          <li>Surface security update notices when release notes contain security markers.</li>
+          <li>Keep package updates separate from self-updates.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Installer Safety</h2>
+        <p class="mt-3 text-slate-700">The Windows installer should verify existing installs, create an uninstaller, update PATH intentionally, and never remove user-created projects during uninstall. It should display what it is doing with a progress bar instead of hiding work in console windows.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Do not run arbitrary GitHub plugin links without reviewing the source.</li>
+          <li>Do not grant Administrator permission to bots that only need a few permissions.</li>
+          <li>Do not store warning databases or logs in public directories when they include user moderation data.</li>
+          <li>Do not publish source maps for protected production builds.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Performance Notes</h2>
+        <p class="mt-3 text-slate-700">Security checks should be cheap during normal builds and deeper during `tsundere doctor`, CI, or release workflows. Expensive scans belong in explicit commands or GitHub Actions so day-to-day development stays fast.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
+        <p class="mt-2 text-pink-900"><a href="protect.html">Tsundere Protect</a> · <a href="discord-intelligence.html">Discord Intelligence</a> · <a href="deployment.html">Deployment</a> · <a href="versions.html">Versions</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testing - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="testing.html">Testing</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">Testing</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Testing Tsundere projects means testing your `.yuri` source, generated runtime behavior, Discord handlers, services, installers, CLI commands, and docs links.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="mt-3 text-slate-700">Tsundere supports normal JavaScript testing workflows because it compiles to Node-compatible output. The official testing package roadmap adds helpers for command contexts, interactions, components, modal submissions, cache data, and Discord REST mocks.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Why It Exists</h2>
+        <p class="mt-3 text-slate-700">Discord bots often fail in handlers that are hard to manually reproduce. Tests let you validate option parsing, permission paths, component data, warning databases, logging decisions, and edge cases before deploying a bot to real servers.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Use It</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Use unit tests for pure services, config loading, and command helper functions.</li>
+          <li>Use integration tests for command handlers with mocked Discord contexts.</li>
+          <li>Use snapshot-like tests for generated command metadata.</li>
+          <li>Use CLI tests for templates, installer scripts, package commands, and runtime launches.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Unit Test Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { test, expect } from "@tsundere/testing"
+import { formatDuration } from "../src/services/time"
+
+test("formats minutes", () => {
+  expect(formatDuration(5)).toBe("5 minutes")
+})</code></pre>
+        <p class="mt-4 text-slate-600">The official API is planned. Today, you can use Node's test runner, Vitest, or Jest against generated JavaScript.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Command Handler Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>test("ping replies with latency", async () => {
+  const ctx = mockCommandCtx({
+    commandName: "ping",
+    client: { ping: 42 }
+  })
+
+  await pingHandler(ctx)
+
+  expect(ctx.replies[0].content).toContain("42ms")
+})</code></pre>
+        <p class="mt-4 text-slate-600">Mock the smallest useful surface. A command test usually needs options, user, member, guild, reply calls, and permission state. It does not need a real gateway connection.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Command Metadata Test</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import ban from "../src/commands/admin/ban"
+
+test("ban command requires target", () => {
+  const data = ban.toJSON()
+  expect(data.name).toBe("ban")
+  expect(data.options[0].name).toBe("target")
+  expect(data.options[0].required).toBe(true)
+})</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Do not only test happy paths. Test missing options, missing permissions, deleted members, and partial cached data.</li>
+          <li>Do not call Discord's real API in normal unit tests.</li>
+          <li>Do not let tests depend on command propagation timing.</li>
+          <li>Do not snapshot huge generated files when targeted assertions would be clearer.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Performance Notes</h2>
+        <p class="mt-3 text-slate-700">Keep unit tests fast and run them on every commit. Put slow Discord-like integration tests behind a separate script or CI job. Cache compiler fixtures when testing many `.yuri` examples.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
+        <p class="mt-2 text-pink-900"><a href="examples.html">Examples</a> · <a href="cli.html">CLI and Runtime</a> · <a href="discord.html">Discord Guide</a> · <a href="security.html">Security</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

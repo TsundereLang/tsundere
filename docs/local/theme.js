@@ -28,9 +28,14 @@ window.addEventListener("DOMContentLoaded", () => {
     nav.parentElement?.insertBefore(search, nav);
 
     const links = [
+      ["language.html", "Language"],
       ["templates.html", "Templates"],
       ["examples.html", "Examples"],
       ["transition.html", "Transition"],
+      ["testing.html", "Testing"],
+      ["deployment.html", "Deployment"],
+      ["observability.html", "Observability"],
+      ["security.html", "Security"],
       ["versions.html", "Versions"]
     ];
     const current = location.pathname.split("/").pop();
@@ -142,6 +147,11 @@ const docsIndex = [
     text: "Install Tsundere from a release zip with install-tsundere.ps1. Create projects with tsundere create my-bot --template discord. Run tsundere install and tsundere dev. Add DISCORD_TOKEN to .env. Existing projects that cannot resolve @tsundere/discord should run tsundere runtime install and tsundere install."
   },
   {
+    href: "language.html",
+    title: "Language Fundamentals",
+    text: "Language fundamentals explain .yuri files, TypeScript style syntax, variables, const, let, type aliases, async functions, modules, imports, npm packages, local runtime imports, Discord native layouts, commands folder, events folder, services folder, typed components, custom IDs, common mistakes, intent warnings, secrets, and performance notes."
+  },
+  {
     href: "discord.html",
     title: "Discord Guide",
     text: "Discord guide covers Client setup, Intents, Guilds, GuildMessages, MessageContent, slash commands, interactions, buttons, selects, modals, embeds, Component.define, typed component data, command discovery config, route based commands, event layouts, and Discord diagnostics for custom IDs and embed limits."
@@ -175,6 +185,26 @@ const docsIndex = [
     href: "transition.html",
     title: "Transition to Yuri",
     text: "Transition to Yuri explains how JavaScript and Python developers should write Tsundere code. It covers imports, events, client.on, client.once, Slash.command, interaction replies, command discovery, builders, Discord layouts, runtime commands, tsundere dev, build, start, and how Yuri is not a one to one JavaScript copy."
+  },
+  {
+    href: "testing.html",
+    title: "Testing",
+    text: "Testing explains unit tests, integration tests, command handler tests, generated command metadata tests, @tsundere/testing roadmap, Node test runner, Vitest, Jest, mocked Discord contexts, mocked interactions, mocked options, permission edge cases, command propagation, generated JavaScript, CI testing, coverage, and common mistakes."
+  },
+  {
+    href: "deployment.html",
+    title: "Deployment",
+    text: "Deployment explains Node compatible production deployment, tsundere runtime install, tsundere install, tsundere build, tsundere start, production environment variables, COMMANDS_GLOBAL, DISCORD_GUILD_ID, Docker shape, systemd shape, Linux servers, global slash command propagation, local @tsundere/discord runtime, and common deployment mistakes."
+  },
+  {
+    href: "observability.html",
+    title: "Observability",
+    text: "Observability explains structured logs, JSON output, pretty development logs, secret redaction, worker metadata, shard metadata, request IDs, Prometheus metrics, Grafana dashboards, Loki queries, OpenTelemetry traces, runtime metrics, compiler metrics, CLI metrics, package manager metrics, cache metrics, command latency, REST rate limits, memory, CPU, and gateway latency."
+  },
+  {
+    href: "security.html",
+    title: "Security",
+    text: "Security explains secret handling, .env files, deployment secrets, safe CLI behavior, path safety, cleanup safety, updater safety, installer safety, dependency safety, Discord permission safety, BanMembers, role hierarchy, OAuth scopes, tsundere updater, security update notices, Tsundere Protect, source maps, plugin review, and vulnerability reporting."
   },
   {
     href: "updates.html",

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Observability - Tsundere Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js" defer></script>
+</head>
+<body class="bg-white text-slate-900">
+  <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
+    <aside class="border-r border-slate-200 bg-slate-50 px-6 py-6 lg:sticky lg:top-0 lg:h-screen">
+      <div class="flex items-center gap-3">
+        <img src="../../assets/tsundere-logo.png" alt="Tsundere logo" class="h-12 w-12 rounded-lg object-cover">
+        <div><div class="text-lg font-semibold">Tsundere</div><div class="text-xs text-slate-500">Local Documentation</div></div>
+      </div>
+      <nav class="mt-8 space-y-1 text-sm">
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="index.html">Overview</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="getting-started.html">Getting Started</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="discord.html">Discord Guide</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="cli.html">CLI and Runtime</a>
+        <a class="block rounded-md bg-pink-100 px-3 py-2 font-medium text-pink-800" href="observability.html">Observability</a>
+        <a class="block rounded-md px-3 py-2 text-slate-700 hover:bg-white" href="updates.html">Updates</a>
+      </nav>
+    </aside>
+    <main class="mx-auto w-full max-w-5xl px-6 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">Observability</h1>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Tsundere projects should be easy to inspect in development and production. Observability covers structured logs, metrics, traces, dashboards, alerts, and runtime health.</p>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="mt-3 text-slate-700">A production bot needs more than console output. You need to know when commands are slow, when Discord REST calls are rate limited, when shards reconnect, when memory grows, and when a deployment starts failing.</p>
+        <p class="mt-3 text-slate-700">Tsundere's observability direction is built around structured events that can flow into Prometheus, Grafana, Loki, OpenTelemetry, Sentry, Datadog, or a custom webhook.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Why It Exists</h2>
+        <p class="mt-3 text-slate-700">Discord bots often fail quietly. A missing intent, stale command sync, bad permission, or API rate limit can look like a user problem from the outside. Observability turns those invisible failures into searchable records and measurable signals.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">When To Use It</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Use pretty logs while developing locally.</li>
+          <li>Use JSON logs in production, Docker, systemd, and hosted workers.</li>
+          <li>Use metrics when you need uptime, latency, memory, CPU, command counts, or REST rate limit dashboards.</li>
+          <li>Use traces when one user action touches Discord, a database, a queue, and an external API.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Structured Logging Shape</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{
+  "level": "info",
+  "time": "2026-06-06T12:00:00.000Z",
+  "service": "tsundere-bot",
+  "shard": 0,
+  "requestId": "cmd_01HX",
+  "event": "command.completed",
+  "command": "ping",
+  "guildId": "123",
+  "latencyMs": 42
+}</code></pre>
+        <p class="mt-4 text-slate-600">Use stable field names so logs remain searchable. Avoid building logs from only human sentences when machines also need to read them.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Development Logging</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { logger } from "@tsundere/logger"
+
+const log = logger({
+  service: "community-bot",
+  format: "pretty",
+  redact: ["DISCORD_TOKEN", "GITHUB_TOKEN"]
+})
+
+log.info("Bot online", {
+  user: client.user.tag,
+  shard: client.shardId ?? 0
+})</code></pre>
+        <p class="mt-4 text-slate-600">The logger package is a planned official package. Until it lands, follow the same shape with your preferred npm logger.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Metrics To Track</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Runtime</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Uptime, memory, CPU, event loop lag, shard status, reconnects, cache size, gateway latency.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Discord</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Command count, interaction latency, REST status, route buckets, rate limits, failed replies, missing permissions.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Compiler</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Build duration, file count, cache hits, diagnostic count, generated output size.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Package Manager</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Install duration, cache hits, reused packages, store validation failures, lockfile changes.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Prometheus Example</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code># HELP tsundere_command_duration_ms Command execution duration.
+# TYPE tsundere_command_duration_ms histogram
+tsundere_command_duration_ms_bucket{command="ping",le="50"} 18
+tsundere_command_duration_ms_bucket{command="ping",le="100"} 24
+
+# HELP tsundere_discord_rest_requests_total Discord REST requests.
+# TYPE tsundere_discord_rest_requests_total counter
+tsundere_discord_rest_requests_total{method="PUT",route="/commands",status="200"} 1</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Grafana And Loki</h2>
+        <p class="mt-3 text-slate-700">Send JSON logs to Loki and metrics to Prometheus, then build Grafana panels for command latency, bot uptime, shard reconnects, rate limit pressure, memory, CPU, and deployment version.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>{service="tsundere-bot", event="command.failed"}
+| json
+| command="ban"</code></pre>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Common Mistakes</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 text-slate-700">
+          <li>Do not log Discord tokens, OAuth secrets, webhook URLs, or database passwords.</li>
+          <li>Do not log every message create event in busy servers unless there is a clear reason.</li>
+          <li>Do not rely only on Discord channel logs for production health.</li>
+          <li>Do not attach high-cardinality values like raw message IDs to every metric label.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Performance Notes</h2>
+        <p class="mt-3 text-slate-700">Prefer batched metrics and non-blocking exports. Logging should not slow down command responses. Redact secrets before logs leave the process, not after they arrive in a remote system.</p>
+      </section>
+
+      <section class="mt-10 rounded-lg border border-pink-200 bg-pink-50 p-5">
+        <h2 class="text-xl font-semibold text-pink-900">Related Documentation</h2>
+        <p class="mt-2 text-pink-900"><a href="deployment.html">Deployment</a> · <a href="security.html">Security</a> · <a href="cli.html">CLI and Runtime</a> · <a href="discord-intelligence.html">Discord Intelligence</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -8,6 +8,7 @@ release/
 installer/electron/out/
 tsundere-plugins/
 tsundere-gitbot/
+tsundere-web/
 tsundere-dotgithub/
 github-snake.svg
 github-snake-dark.svg
