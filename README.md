@@ -163,6 +163,8 @@ tsundere metrics doctor
 tsundere metrics export-grafana ./grafana/tsundere-dashboard.json
 tsundere metrics serve --port 9100 --path /metrics
 tsundere reload
+tsundere stress runtime
+tsundere stress runtime --heavy
 tsundere store path
 tsundere store prune
 tsundere cache clean
@@ -219,9 +221,21 @@ tsundere metrics doctor
 tsundere metrics export-grafana ./grafana/tsundere-dashboard.json
 tsundere metrics serve --port 9100 --path /metrics
 tsundere reload
+tsundere stress runtime
 ```
 
 For local stress testing, set `simulateShards` or `TSUNDERE_GUILD_COUNT`, `TSUNDERE_USER_COUNT`, and `TSUNDERE_GATEWAY_LATENCY_MS` before running `tsundere inspect`. `runtime.redis` is accepted in config so projects can keep Redis connection settings in one place while the current built-in cache backend stays local-memory first.
+
+Stress and optimization testing:
+
+```powershell
+npm run stress:runtime
+npm run stress:runtime:heavy
+tsundere stress runtime --iterations 100000 --shards 128 --cache-entries 50000 --tasks 500 --metrics-samples 500 --payload-bytes 1024
+tsundere stress runtime --json
+```
+
+The stress tester pounds the new distributed runtime foundation locally: automatic scale planning, simulated shards, IPC broadcasts, global events, cache hit/miss paths, singleton task execution, Prometheus metrics generation, Grafana dashboard generation, memory delta, total operations, per-section timings, and operations per second.
 
 ## Package Optimizer
 
@@ -315,6 +329,10 @@ https://discord.gg/Gpxj5xVXBZ
 ## Docs
 
 - Local docs: `docs/local/index.html`
+- Architecture: `docs/ARCHITECTURE.md`
+- Audit notes: `docs/AUDIT.md`
+- Contributing: `CONTRIBUTING.md`
+- Security policy: `SECURITY.md`
 - Examples: `docs/examples`
 - Updates: `updates.md`
 - GitHub: `https://github.com/TsundereLang/tsundere`

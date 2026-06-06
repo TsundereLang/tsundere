@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { GraphDocs, GraphFunction, GraphParameter, GraphProperty, TypeGraph, TypeGraphNode, TypeSource } from "./graph.js";
+import { resolveInside } from "../security/path-safety.js";
 
 const discordPackages = [
   "discord.js",
@@ -74,7 +75,7 @@ export async function findTypeSources(cwd: string, packageNames = discordPackage
     const packageJsonPath = join(packageRoot, "package.json");
     const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as { version?: string; types?: string; typings?: string; main?: string };
     const entry = packageJson.types ?? packageJson.typings ?? packageJson.main ?? "index.d.ts";
-    const files = await collectTypeFiles(resolve(packageRoot, entry), packageRoot);
+    const files = await collectTypeFiles(resolveInside(packageRoot, entry, `${packageName} type entry`), packageRoot);
     sources.push({
       packageName,
       version: packageJson.version ?? "0.0.0",
@@ -100,8 +101,7 @@ export async function createTypeCacheKey(cwd: string, graph: TypeGraph): Promise
 
 async function loadTypeScript(): Promise<any> {
   try {
-    const importer = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<any>;
-    return await importer("typescript");
+    return await import("typescript");
   } catch {
     throw new Error("The TypeScript package is required for `tsundere types sync`. Install dependencies with `tsundere install`.");
   }
@@ -257,7 +257,7 @@ function cleanName(name: string): string {
 }
 
 function resolvePackageRoot(cwd: string, packageName: string): string | undefined {
-  const root = resolve(cwd, "node_modules", ...packageName.split("/"));
+  const root = resolveInside(resolve(cwd, "node_modules"), packageName, "package type source");
   return existsSync(join(root, "package.json")) ? root : undefined;
 }
 

@@ -54,6 +54,7 @@
               <tr><td class="px-4 py-3 font-mono">tsundere metrics serve</td><td class="px-4 py-3">Serve Prometheus or JSON runtime metrics for local dashboards.</td></tr>
               <tr><td class="px-4 py-3 font-mono">tsundere metrics export-grafana</td><td class="px-4 py-3">Write a starter Grafana dashboard JSON file.</td></tr>
               <tr><td class="px-4 py-3 font-mono">tsundere reload</td><td class="px-4 py-3">Prepare a staged runtime reload without deleting project files.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">tsundere stress runtime</td><td class="px-4 py-3">Stress test simulated shards, IPC, events, cache, tasks, metrics, and Grafana generation.</td></tr>
               <tr><td class="px-4 py-3 font-mono">tsundere fingerprint inspect</td><td class="px-4 py-3">Inspect protected build metadata or fingerprints inside an output file.</td></tr>
               <tr><td class="px-4 py-3 font-mono">tsundere version</td><td class="px-4 py-3">Print the installed Tsundere version.</td></tr>
               <tr><td class="px-4 py-3 font-mono">tsundere updater</td><td class="px-4 py-3">Check the configured GitHub releases feed for CLI updates.</td></tr>
@@ -64,6 +65,15 @@
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Runtime Stress Testing</h2>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere stress runtime
+tsundere stress runtime --heavy
+tsundere stress runtime --iterations 100000 --shards 128 --cache-entries 50000 --tasks 500 --metrics-samples 500 --payload-bytes 1024
+tsundere stress runtime --json</code></pre>
+        <p class="mt-4 text-slate-700">The stress runner measures local distributed runtime behavior: scale planning, simulated shards, IPC, global events, cache hit/miss paths, singleton tasks, Prometheus output, Grafana dashboard generation, memory delta, per-section timings, and operations per second.</p>
       </section>
 
       <section class="mt-10">

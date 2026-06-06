@@ -185,7 +185,7 @@ ipcMain.handle("window:close", (event) => {
 
 function commandStatus(command, args) {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { shell: true, windowsHide: true });
+    const child = spawn(commandExecutable(command), args, { shell: false, windowsHide: true });
     let output = "";
     child.stdout.on("data", (chunk) => {
       output += chunk.toString();
@@ -199,7 +199,7 @@ function commandStatus(command, args) {
 
 function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { shell: true, windowsHide: true });
+    const child = spawn(commandExecutable(command), args, { shell: false, windowsHide: true });
     let output = "";
     let error = "";
     child.stdout.on("data", (chunk) => {
@@ -269,11 +269,21 @@ function writeInstallerConfig(configRoot, installRoot, options) {
 function registerUninstaller(installRoot) {
   const uninstall = path.join(installRoot, "uninstall.ps1");
   const reg = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Tsundere";
-  spawn("reg", ["add", reg, "/f"], { shell: true, windowsHide: true });
-  spawn("reg", ["add", reg, "/v", "DisplayName", "/t", "REG_SZ", "/d", "Tsundere", "/f"], { shell: true, windowsHide: true });
-  spawn("reg", ["add", reg, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", version, "/f"], { shell: true, windowsHide: true });
-  spawn("reg", ["add", reg, "/v", "Publisher", "/t", "REG_SZ", "/d", "TsundereLang", "/f"], { shell: true, windowsHide: true });
-  spawn("reg", ["add", reg, "/v", "UninstallString", "/t", "REG_SZ", "/d", `powershell -ExecutionPolicy Bypass -File "${uninstall}"`, "/f"], { shell: true, windowsHide: true });
+  spawn("reg", ["add", reg, "/f"], { shell: false, windowsHide: true });
+  spawn("reg", ["add", reg, "/v", "DisplayName", "/t", "REG_SZ", "/d", "Tsundere", "/f"], { shell: false, windowsHide: true });
+  spawn("reg", ["add", reg, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", version, "/f"], { shell: false, windowsHide: true });
+  spawn("reg", ["add", reg, "/v", "Publisher", "/t", "REG_SZ", "/d", "TsundereLang", "/f"], { shell: false, windowsHide: true });
+  spawn("reg", ["add", reg, "/v", "UninstallString", "/t", "REG_SZ", "/d", `powershell -ExecutionPolicy Bypass -File "${uninstall}"`, "/f"], { shell: false, windowsHide: true });
+}
+
+function commandExecutable(command) {
+  if (process.platform !== "win32" || command.includes(".") || command.includes("\\") || command.includes("/")) {
+    return command;
+  }
+  if (["npm", "pnpm", "npx", "code", "cursor", "tsundere"].includes(command)) {
+    return `${command}.cmd`;
+  }
+  return command;
 }
 
 async function installStatus(installRoot = path.join(os.homedir(), "AppData", "Local", "Tsundere")) {

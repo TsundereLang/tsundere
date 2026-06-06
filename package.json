@@ -24,6 +24,8 @@
     "commands:sync": "node dist/cli.js commands sync",
     "test": "node dist/cli.js test",
     "test:unit": "npm run build && node --test tests/*.test.mjs",
+    "stress:runtime": "npm run build && node dist/cli.js stress runtime",
+    "stress:runtime:heavy": "npm run build && node dist/cli.js stress runtime --heavy",
     "doctor": "node dist/cli.js doctor",
     "linux:install": "sh scripts/install-linux.sh",
     "installer:electron": "npm --prefix installer/electron run dev",

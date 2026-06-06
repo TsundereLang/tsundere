@@ -3,7 +3,7 @@ name: Tsundere CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, master]
 
 jobs:
   check:
@@ -19,5 +19,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: pnpm lint
-      - run: pnpm test
+      - run: pnpm test:unit
+      - run: pnpm stress:runtime

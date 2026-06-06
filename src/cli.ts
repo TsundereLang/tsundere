@@ -12,7 +12,8 @@ import { writeCommandManifest } from "./commands/discovery.js";
 import { cleanStore, optimizedNpmInstall, optimizerDoctor, pruneStore, readStorePath } from "./package-optimizer.js";
 import { commandExists, currentPlatform, ensureExecutable, ensureTsunderePaths, openFileCommand, platformExecutable, platformLabel, runCommand, runtimeChecks, tsunderePaths } from "./platform/index.js";
 import { compareVersions, configureDailyUpdateCheck, latestRelease, securityUpdateNotice, selfUpdate } from "./updater.js";
-import { createDistributedRuntime, createRuntimePlan, exportGrafanaDashboard, prometheusMetrics, serveMetrics } from "./distributed/index.js";
+import { createDistributedRuntime, createRuntimePlan, exportGrafanaDashboard, prometheusMetrics, runRuntimeStressTest, serveMetrics, type RuntimeStressReport } from "./distributed/index.js";
+import { resolveInside } from "./security/path-safety.js";
 
 const [, , command = "help", ...args] = process.argv;
 const cliRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -77,6 +78,8 @@ async function run(command: string, args: string[]): Promise<number> {
       return inspect();
     case "reload":
       return reload();
+    case "stress":
+      return stress(args);
     case "commands":
       return commands(args);
     case "fingerprint":
@@ -197,6 +200,30 @@ async function reload(): Promise<number> {
   return 0;
 }
 
+async function stress(args: string[]): Promise<number> {
+  const action = args[0] ?? "runtime";
+  if (action !== "runtime") {
+    throw new Error("Usage: tsundere stress runtime [--heavy] [--json] [--iterations 25000] [--shards 32] [--workers auto] [--cache-entries 10000] [--tasks 100] [--metrics-samples 100] [--payload-bytes 256]");
+  }
+  const heavy = args.includes("--heavy");
+  const config = await loadConfig();
+  const report = await runRuntimeStressTest(config, {
+    iterations: readNumberFlag(args, "--iterations") ?? (heavy ? 250_000 : 25_000),
+    shards: readNumberFlag(args, "--shards") ?? (heavy ? 128 : 32),
+    workers: readWorkerFlag(args, "--workers") ?? "auto",
+    cacheEntries: readNumberFlag(args, "--cache-entries") ?? (heavy ? 75_000 : 10_000),
+    taskExecutions: readNumberFlag(args, "--tasks") ?? (heavy ? 500 : 100),
+    metricsSamples: readNumberFlag(args, "--metrics-samples") ?? (heavy ? 500 : 100),
+    payloadBytes: readNumberFlag(args, "--payload-bytes") ?? (heavy ? 1024 : 256)
+  });
+  if (args.includes("--json")) {
+    console.log(JSON.stringify(report, null, 2));
+    return 0;
+  }
+  printStressReport(report);
+  return 0;
+}
+
 async function updater(args: string[]): Promise<number> {
   const action = args[0] ?? "check";
   if (!["check", "self", "info", "cron"].includes(action)) {
@@ -267,7 +294,7 @@ async function version(): Promise<number> {
 async function createProject(args: string[]): Promise<number> {
   const name = args.find((arg) => !arg.startsWith("-")) ?? "tsundere-app";
   const template = readFlag(args, "--template") ?? "discord";
-  const root = resolve(process.cwd(), name);
+  const root = resolveInside(process.cwd(), name, "project directory");
   if (existsSync(root)) {
     throw new Error(`Cannot create ${name}: path already exists.`);
   }
@@ -306,7 +333,7 @@ async function start(): Promise<number> {
 
 async function format(): Promise<number> {
   const config = await loadConfig();
-  const files = await walk(resolve(process.cwd(), config.source), ".yuri");
+  const files = await walk(resolveInside(process.cwd(), config.source, "source directory"), ".yuri");
   for (const file of files) {
     const source = await readFile(file, "utf8");
     const formatted = source
@@ -441,8 +468,9 @@ async function generate(args: string[]): Promise<number> {
   const target = args[0] ?? "types";
   if (target === "types") {
     const config = await loadConfig();
-    await mkdir(resolve(process.cwd(), ".tsundere"), { recursive: true });
-    await writeFile(resolve(process.cwd(), ".tsundere", "types.d.ts"), generatedTypes(config.name), "utf8");
+    const output = resolveInside(process.cwd(), ".tsundere/types.d.ts", "generated types file");
+    await mkdir(dirname(output), { recursive: true });
+    await writeFile(output, generatedTypes(config.name), "utf8");
     console.log("Generated .tsundere/types.d.ts");
     return 0;
   }
@@ -461,7 +489,7 @@ async function generate(args: string[]): Promise<number> {
   }
 
   const [file, contents] = generator(name);
-  const destination = resolve(process.cwd(), file);
+  const destination = resolveInside(process.cwd(), file, "generated file");
   await mkdir(dirname(destination), { recursive: true });
   await writeFile(destination, contents, "utf8");
   console.log(`Generated ${file}`);
@@ -523,7 +551,7 @@ async function fingerprint(args: string[]): Promise<number> {
   if (action !== "inspect") {
     throw new Error("Usage: tsundere fingerprint inspect [file-or-directory]");
   }
-  const target = resolve(process.cwd(), args[1] ?? ".tsundere/runtime-build");
+  const target = resolveInside(process.cwd(), args[1] ?? ".tsundere/runtime-build", "fingerprint target");
   if (!existsSync(target)) {
     throw new Error(`Fingerprint target not found: ${target}`);
   }
@@ -645,6 +673,8 @@ Usage:
   tsundere metrics doctor
   tsundere inspect
   tsundere reload
+  tsundere stress runtime
+  tsundere stress runtime --heavy
   tsundere version
   tsundere doctor
   tsundere format
@@ -666,13 +696,69 @@ Usage:
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
+  const sign = bytes < 0 ? "-" : "";
+  const absolute = Math.abs(bytes);
+  if (absolute < 1024) {
+    return `${sign}${absolute} B`;
   }
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
+  if (absolute < 1024 * 1024) {
+    return `${sign}${(absolute / 1024).toFixed(1)} KB`;
   }
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  if (absolute < 1024 * 1024 * 1024) {
+    return `${sign}${(absolute / 1024 / 1024).toFixed(1)} MB`;
+  }
+  return `${sign}${(absolute / 1024 / 1024 / 1024).toFixed(2)} GB`;
+}
+
+function printStressReport(report: RuntimeStressReport): void {
+  console.log("Tsundere Runtime Stress Report");
+  console.log(`  status: ${report.status}`);
+  console.log(`  plan: ${report.plan.mode}, ${report.plan.workers} worker${report.plan.workers === 1 ? "" : "s"}, ${report.plan.shards} shard${report.plan.shards === 1 ? "" : "s"}, simulated ${report.plan.simulated ? "yes" : "no"}`);
+  console.log(`  total: ${formatMs(report.durationMs)} for ${formatCount(report.operations)} ops (${formatCount(report.operationsPerSecond)} ops/s)`);
+  console.log(`  memory: ${formatBytes(report.memory.beforeBytes)} -> ${formatBytes(report.memory.afterBytes)} (${formatBytes(report.memory.deltaBytes)})`);
+  console.log(`  ipc: ${formatCount(report.ipcDelivered)} delivered`);
+  console.log(`  global events: ${formatCount(report.globalEventsDelivered)} delivered`);
+  console.log(`  cache: ${formatCount(report.cacheEntries)} entries, ${(report.cacheHitRate * 100).toFixed(1)}% hit rate`);
+  console.log(`  tasks: ${formatCount(report.taskExecutions)} singleton executions`);
+  console.log(`  metrics: ${formatBytes(report.metricsBytes)} generated, ${report.grafanaPanelCount} Grafana panels`);
+  for (const section of report.sections) {
+    console.log(`  ${section.name}: ${formatMs(section.durationMs)}, ${formatCount(section.operationsPerSecond)} ops/s`);
+  }
+  for (const warning of report.warnings) {
+    console.log(`  warning: ${warning}`);
+  }
+}
+
+function formatCount(value: number): string {
+  return Math.round(value).toLocaleString();
+}
+
+function formatMs(value: number): string {
+  if (value < 1000) {
+    return `${value.toFixed(1)}ms`;
+  }
+  return `${(value / 1000).toFixed(2)}s`;
+}
+
+function readNumberFlag(args: string[], flag: string): number | undefined {
+  const value = readFlag(args, flag);
+  if (!value) {
+    return undefined;
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function readWorkerFlag(args: string[], flag: string): number | "auto" | undefined {
+  const value = readFlag(args, flag);
+  if (!value) {
+    return undefined;
+  }
+  if (value === "auto") {
+    return "auto";
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(1, Math.floor(number)) : undefined;
 }
 
 function formatDuration(seconds: number): string {

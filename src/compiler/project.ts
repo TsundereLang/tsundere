@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, watch } from "node:fs";
-import { cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { spawn, type ChildProcess } from "node:child_process";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,7 @@ import { compileYuri } from "./transpile.js";
 import { formatDiagnostic } from "./diagnostics.js";
 import { walk } from "../fs.js";
 import { protectJavaScript } from "./protect.js";
+import { removeInside, resolveInside } from "../security/path-safety.js";
 
 interface BuildOptions {
   emitRuntime?: boolean;
@@ -19,8 +20,9 @@ interface BuildOptions {
 }
 
 export async function buildProject(config: TsundereConfig, cwd = process.cwd(), options: BuildOptions = {}): Promise<number> {
-  const sourceRoot = resolve(cwd, config.source);
-  const outRoot = resolve(cwd, config.outDir);
+  const projectRoot = resolve(cwd);
+  const sourceRoot = resolveInside(projectRoot, config.source, "source directory");
+  const outRoot = resolveInside(projectRoot, config.outDir, "output directory");
   const files = await walk(sourceRoot, ".yuri");
   const diagnosticOptions = diagnosticFormatOptions(config);
   let errors = 0;
@@ -173,10 +175,11 @@ export async function runBuiltProject(config: TsundereConfig, cwd = process.cwd(
 }
 
 async function emitNodeRuntime(config: TsundereConfig, cwd: string, options: BuildOptions = {}): Promise<void> {
-  const outRoot = resolve(cwd, config.outDir);
-  const runtimeRoot = resolve(cwd, ".tsundere", "runtime-build");
+  const projectRoot = resolve(cwd);
+  const outRoot = resolveInside(projectRoot, config.outDir, "output directory");
+  const runtimeRoot = resolveInside(projectRoot, ".tsundere/runtime-build", "runtime output directory");
   const files = await walk(outRoot, config.target === "typescript" ? ".ts" : ".js");
-  await rm(runtimeRoot, { recursive: true, force: true });
+  await removeInside(projectRoot, runtimeRoot, "runtime output directory");
   const protectedBuilds: Array<{ file: string; buildId: string; profile: ProtectProfile }> = [];
   for (const file of files) {
     const source = await readFile(file, "utf8");
@@ -221,9 +224,10 @@ async function refreshBundledDiscordRuntime(cwd: string): Promise<void> {
   if (!existsSync(sourceDist)) {
     return;
   }
-  const targetRoot = resolve(cwd, ".tsundere", "runtime", "discord");
+  const projectRoot = resolve(cwd);
+  const targetRoot = resolveInside(projectRoot, ".tsundere/runtime/discord", "bundled Discord runtime");
   const targetDist = resolve(targetRoot, "dist");
-  await rm(targetDist, { recursive: true, force: true });
+  await removeInside(projectRoot, targetDist, "bundled Discord runtime dist");
   await mkdir(targetRoot, { recursive: true });
   await cp(sourceDist, targetDist, { recursive: true, force: true });
   await writeFile(resolve(targetRoot, "package.json"), `${JSON.stringify({

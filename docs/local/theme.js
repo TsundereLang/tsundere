@@ -159,7 +159,7 @@ const docsIndex = [
   {
     href: "cli.html",
     title: "CLI and Runtime",
-    text: "CLI commands include tsundere create, install, update package, dev, build, start, inspect, reload, metrics serve, metrics doctor, metrics export-grafana, version, updater, commands sync, types sync, docs, runtime install, lint, format, test, doctor, plugin install, store path, store prune, and cache clean. Runtime flow compiles .yuri into build and emits runnable JavaScript into .tsundere/runtime-build. tsundere start runs main.js through Node. tsundere dev watches and restarts. Distributed runtime support includes local IPC, cache stats, Prometheus metrics, Grafana dashboard export, simulated shards, and OpenTelemetry config."
+    text: "CLI commands include tsundere create, install, update package, dev, build, start, inspect, reload, stress runtime, metrics serve, metrics doctor, metrics export-grafana, version, updater, commands sync, types sync, docs, runtime install, lint, format, test, doctor, plugin install, store path, store prune, and cache clean. Runtime flow compiles .yuri into build and emits runnable JavaScript into .tsundere/runtime-build. tsundere start runs main.js through Node. tsundere dev watches and restarts. Distributed runtime support includes local IPC, cache stats, Prometheus metrics, Grafana dashboard export, simulated shards, clustering and sharding stress tests, optimization reports, and OpenTelemetry config."
   },
   {
     href: "templates.html",
@@ -179,7 +179,7 @@ const docsIndex = [
   {
     href: "updates.html",
     title: "Updates",
-    text: "Updates explain linux-testing branch work, distributed runtime metrics, npm-first package optimizer, tsundere store path, cache clean, plugin install, GitHub plugin links, plugin registry, GitHub snake workflow, Windows web installer, Linux web installer, release publishing, Discord component layouts, GitBot moderation, warnings database, welcome autorole, and GitHub role sync."
+    text: "Updates explain linux-testing branch work, distributed runtime metrics, runtime stress testing, npm-first package optimizer, tsundere store path, cache clean, plugin install, GitHub plugin links, plugin registry, GitHub snake workflow, Windows web installer, Linux web installer, release publishing, Discord component layouts, GitBot moderation, warnings database, welcome autorole, and GitHub role sync."
   },
   {
     href: "versions.html",

@@ -1,9 +1,8 @@
 import { EventEmitter } from "node:events";
 import { createServer, type Server } from "node:http";
 import { cpus, freemem, totalmem, uptime } from "node:os";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { mkdir } from "node:fs/promises";
 import type { RuntimeCacheBackend, RuntimeConfig, RuntimeMetricFormat, RuntimeScaleMode, TsundereConfig } from "../types.js";
 
 export interface RuntimePlan {
@@ -68,7 +67,11 @@ export class DistributedRuntime {
   readonly tasks = new TaskRegistry(this);
   private readonly counters = new Map<string, number>();
 
-  constructor(readonly plan: RuntimePlan) {}
+  constructor(readonly plan: RuntimePlan) {
+    const maxListeners = Math.max(10, plan.workers + plan.shards + 8);
+    this.bus.setMaxListeners(maxListeners);
+    this.events.setMaxListeners(maxListeners);
+  }
 
   broadcast(name: string, payload?: unknown): void {
     this.increment("ipcMessages");
@@ -151,6 +154,10 @@ export class DistributedCache {
 
   delete(namespace: string, id: string): boolean {
     return this.values.delete(cacheKey(namespace, id));
+  }
+
+  size(): number {
+    return this.values.size;
   }
 }
 

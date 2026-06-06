@@ -1,10 +1,11 @@
-import { rm, writeFile, mkdir, readFile } from "node:fs/promises";
+import { writeFile, mkdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createDiscordBuilders, createDiscordDocs, createDiscordEvents, createDiscordImports, createTypeNarrowingMetadata, discordDiagnosticDocs } from "./discord.js";
 import { createTypeCacheKey, extractDiscordTypeGraph, findTypeSources } from "./extractor.js";
 import { mapGraphToYuriTypes } from "./mapper.js";
 import type { TypeGraph, YuriTypeMetadata } from "./graph.js";
+import { removeInside, resolveInside } from "../security/path-safety.js";
 
 export interface TypeSyncResult {
   cacheDir: string;
@@ -15,7 +16,7 @@ export interface TypeSyncResult {
 }
 
 export async function syncDiscordTypes(cwd = process.cwd()): Promise<TypeSyncResult> {
-  const cacheDir = resolve(cwd, ".yuri-cache");
+  const cacheDir = resolveInside(cwd, ".yuri-cache", "Discord type cache directory");
   await mkdir(cacheDir, { recursive: true });
   const graph = await extractDiscordTypeGraph({ cwd });
   const cacheKey = await createTypeCacheKey(cwd, graph);
@@ -44,11 +45,11 @@ export async function syncDiscordTypes(cwd = process.cwd()): Promise<TypeSyncRes
 }
 
 export async function cleanDiscordTypes(cwd = process.cwd()): Promise<void> {
-  await rm(resolve(cwd, ".yuri-cache"), { recursive: true, force: true });
+  await removeInside(cwd, resolveInside(cwd, ".yuri-cache", "Discord type cache directory"), "Discord type cache directory");
 }
 
 export async function inspectDiscordType(symbol: string, cwd = process.cwd()): Promise<YuriTypeMetadata["types"][number] | undefined> {
-  const file = resolve(cwd, ".yuri-cache", "discord.types.json");
+  const file = resolveInside(cwd, ".yuri-cache/discord.types.json", "Discord type metadata");
   if (!existsSync(file)) {
     return undefined;
   }
@@ -64,7 +65,7 @@ export async function doctorDiscordTypes(cwd = process.cwd()): Promise<{ ok: boo
   } else {
     messages.push(`Found Discord type sources: ${sources.map((source) => `${source.packageName}@${source.version}`).join(", ")}`);
   }
-  const cacheFile = resolve(cwd, ".yuri-cache", "discord.cache.json");
+  const cacheFile = resolveInside(cwd, ".yuri-cache/discord.cache.json", "Discord type cache metadata");
   messages.push(existsSync(cacheFile) ? "Discord type cache exists." : "Discord type cache is missing. Run `tsundere types sync`.");
   return { ok: sources.length > 0 && existsSync(cacheFile), messages };
 }

@@ -85,7 +85,7 @@ test("missing or corrupt cache entry falls back to a miss", async () => {
   const metadata = JSON.parse(await readFile(metadataPath, "utf8"));
   await writeFile(metadataPath, `${JSON.stringify({ ...metadata, directoryHash: "bad" }, null, 2)}\n`, "utf8");
   await rm(join(fixture.project, "node_modules"), { recursive: true, force: true });
-  const result = await hydrateCachedPackages(fixture.entries(), config);
+  const result = await hydrateCachedPackages(fixture.entries(), config, fixture.project);
   assert.equal(result.reused, 0);
   assert.equal(result.corrupt, 1);
   assert.equal(result.misses, 1);
@@ -104,10 +104,25 @@ test("copy mode materializes packages without hard links", async () => {
   await writePackage(join(fixture.project, "node_modules", "left-pad"), "left-pad", "1.0.0", "copy");
   await harvestProjectPackages(fixture.entries(), config);
   await rm(join(fixture.project, "node_modules"), { recursive: true, force: true });
-  const result = await hydrateCachedPackages(fixture.entries(), config);
+  const result = await hydrateCachedPackages(fixture.entries(), config, fixture.project);
   assert.equal(result.copied, 1);
   assert.equal(result.linked, 0);
   assert.equal(await readFile(join(fixture.project, "node_modules", "left-pad", "index.js"), "utf8"), "copy\n");
+  await fixture.cleanup();
+});
+
+test("package hydration refuses destinations outside project node_modules", async () => {
+  const fixture = await createProject();
+  const config = resolveInstallConfig({ storePath: fixture.store, linkMode: "copy", themeLogs: false }, fixture.project);
+  await writePackage(join(fixture.project, "node_modules", "left-pad"), "left-pad", "1.0.0", "safe");
+  await harvestProjectPackages(fixture.entries(), config);
+  await rm(join(fixture.project, "node_modules"), { recursive: true, force: true });
+  const badEntry = {
+    ...fixture.entries()[0],
+    diskPath: join(fixture.project, "..", "outside-left-pad")
+  };
+  await assert.rejects(() => hydrateCachedPackages([badEntry], config, fixture.project), /package hydration destination must stay inside/u);
+  assert.equal(existsSync(badEntry.diskPath), false);
   await fixture.cleanup();
 });
 
@@ -128,7 +143,7 @@ test("existing node_modules packages are not overwritten", async () => {
   await writePackage(join(fixture.project, "node_modules", "left-pad"), "left-pad", "1.0.0", "store");
   await harvestProjectPackages(fixture.entries(), config);
   await writePackage(join(fixture.project, "node_modules", "left-pad"), "left-pad", "1.0.0", "project");
-  const result = await hydrateCachedPackages(fixture.entries(), config);
+  const result = await hydrateCachedPackages(fixture.entries(), config, fixture.project);
   assert.equal(result.existing, 1);
   assert.equal(await readFile(join(fixture.project, "node_modules", "left-pad", "index.js"), "utf8"), "project\n");
   await cleanStore(config, fixture.project);

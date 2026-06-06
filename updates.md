@@ -18,6 +18,7 @@ Tsundere moved from a basic `.yuri` experiment into a more complete Discord-focu
 - Generated runtime output refreshes the bundled `.tsundere/runtime/discord` package automatically.
 - Runtime crash footers now show `Tsundere Runtime <version>` instead of only the Node.js version.
 - Added distributed runtime planning, `tsundere inspect`, `tsundere reload`, Prometheus metrics serving, and Grafana dashboard export.
+- Added `tsundere stress runtime` plus `npm run stress:runtime` and `npm run stress:runtime:heavy` for local clustering, sharding, IPC, cache, task, metrics, and optimization stress reports.
 - `tsundere help` and `tsundere version` show release/version information.
 - Added `tsundere updater cron [install|remove|status]` for daily update checks.
 - Added security update notices when release notes include security-related keywords.

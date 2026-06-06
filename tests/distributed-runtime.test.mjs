@@ -8,6 +8,7 @@ import {
   createRuntimePlan,
   exportGrafanaDashboard,
   prometheusMetrics,
+  runRuntimeStressTest,
   serveMetrics
 } from "../dist/distributed/index.js";
 
@@ -109,4 +110,25 @@ test("serves metrics over HTTP", async () => {
   assert.equal(response.status, 200);
   assert.match(text, /tsundere_runtime_workers/u);
   await new Promise((resolve) => server.close(resolve));
+});
+
+test("stress tester exercises distributed runtime features", async () => {
+  const report = await runRuntimeStressTest(baseConfig, {
+    iterations: 20,
+    shards: 4,
+    cacheEntries: 10,
+    taskExecutions: 3,
+    metricsSamples: 2,
+    payloadBytes: 16
+  });
+  assert.equal(report.status, "pass");
+  assert.equal(report.plan.shards, 4);
+  assert.equal(report.ipcDelivered, 20);
+  assert.equal(report.globalEventsDelivered, 20);
+  assert.equal(report.cacheEntries, 10);
+  assert.equal(report.snapshot.cacheHits, 10);
+  assert.equal(report.snapshot.cacheMisses, 10);
+  assert.equal(report.taskExecutions, 3);
+  assert.equal(report.grafanaPanelCount >= 10, true);
+  assert.equal(report.sections.length >= 5, true);
 });

@@ -6,6 +6,7 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { existsSync } from "node:fs";
 import type { TsundereConfig } from "./types.js";
 import { commandExists, defaultStorePath, ensureTsunderePaths, expandHomePath, platformExecutable, runCommand, runtimeChecks, tsunderePaths } from "./platform/index.js";
+import { assertPathInside, removeInside } from "./security/path-safety.js";
 
 export type TsundereLinkMode = "auto" | "hardlink" | "copy";
 
@@ -133,7 +134,7 @@ export async function optimizedNpmInstall(npmArgs: string[], options: OptimizedI
   await ensureTsunderePaths(tsunderePaths());
   await ensureStore(installConfig.storePath);
   const beforeEntries = await readPackageEntries(cwd);
-  const hydrate = await hydrateCachedPackages(beforeEntries, installConfig);
+  const hydrate = await hydrateCachedPackages(beforeEntries, installConfig, cwd);
   const npmRunner = options.npmRunner ?? runNpmCommand;
   const npmCode = await npmRunner(npmArgs, cwd);
   const afterEntries = npmCode === 0 ? await readPackageEntries(cwd) : [];
@@ -246,7 +247,7 @@ export async function syncTsunderePackageFiles(cwd: string, config: TsundereInst
   await writeFile(resolve(cwd, "tsundere-lock.yaml"), yamlStringify(lockYaml(cwd, manifest, lock, config, packageEntries, workspace)), "utf8");
 }
 
-export async function hydrateCachedPackages(entries: PackageEntry[], config: TsundereInstallConfig): Promise<HydrateResult> {
+export async function hydrateCachedPackages(entries: PackageEntry[], config: TsundereInstallConfig, cwd = process.cwd()): Promise<HydrateResult> {
   const result: HydrateResult = { hits: 0, misses: 0, reused: 0, linked: 0, copied: 0, existing: 0, corrupt: 0 };
   for (const entry of entries) {
     if (existsSync(entry.diskPath)) {
@@ -264,7 +265,7 @@ export async function hydrateCachedPackages(entries: PackageEntry[], config: Tsu
       result.misses += 1;
       continue;
     }
-    const mode = await materializePackage(storeEntry.files, entry.diskPath, config.linkMode);
+    const mode = await materializePackage(storeEntry.files, entry.diskPath, config.linkMode, cwd);
     result.hits += 1;
     result.reused += 1;
     if (mode === "hardlink") {
@@ -595,7 +596,8 @@ async function writeStoreEntry(storePath: string, storeEntry: StoreEntry, entry:
   }
 }
 
-async function materializePackage(source: string, destination: string, mode: TsundereLinkMode): Promise<"hardlink" | "copy"> {
+async function materializePackage(source: string, destination: string, mode: TsundereLinkMode, cwd: string): Promise<"hardlink" | "copy"> {
+  assertPathInside(resolve(cwd, "node_modules"), destination, "package hydration destination");
   await mkdir(dirname(destination), { recursive: true });
   if (mode === "copy") {
     await cp(source, destination, { recursive: true, force: false, dereference: false });
@@ -605,7 +607,7 @@ async function materializePackage(source: string, destination: string, mode: Tsu
     await hardlinkDirectory(source, destination);
     return "hardlink";
   } catch {
-    await safeRemoveProjectHydration(destination);
+    await safeRemoveProjectHydration(cwd, destination);
     await cp(source, destination, { recursive: true, force: false, dereference: false });
     return "copy";
   }
@@ -797,8 +799,8 @@ async function safeRemoveStorePath(storePath: string, target: string): Promise<v
   await rm(resolvedTarget, { recursive: true, force: true });
 }
 
-async function safeRemoveProjectHydration(target: string): Promise<void> {
-  await rm(target, { recursive: true, force: true });
+async function safeRemoveProjectHydration(cwd: string, target: string): Promise<void> {
+  await removeInside(resolve(cwd, "node_modules"), target, "package hydration destination");
 }
 
 function isDangerousDeleteTarget(target: string): boolean {

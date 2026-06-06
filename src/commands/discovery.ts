@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import type { CommandDiscoveryConfig, TsundereConfig } from "../types.js";
 import { walk } from "../fs.js";
+import { resolveInside } from "../security/path-safety.js";
 
 export interface DiscoveredCommand {
   file: string;
@@ -26,7 +27,7 @@ const defaultCommandConfig: Required<Pick<CommandDiscoveryConfig, "discovery" | 
 
 export async function discoverCommands(config: TsundereConfig, cwd = process.cwd()): Promise<CommandManifest> {
   const commandConfig = { ...defaultCommandConfig, ...config.commands };
-  const directory = resolve(cwd, commandConfig.directory);
+  const directory = resolveInside(cwd, commandConfig.directory, "command discovery directory");
   if (!commandConfig.discovery) {
     return { generatedAt: new Date().toISOString(), directory, commands: [] };
   }
@@ -103,7 +104,7 @@ function findGroupOverride(commands: CommandDiscoveryConfig | undefined, file: s
     return undefined;
   }
   const match = Object.entries(commands.groups).find(([folder]) => {
-    const root = resolve(cwd, folder).replace(/\\/gu, "/");
+    const root = resolveInside(cwd, folder, "command group directory").replace(/\\/gu, "/");
     return file.replace(/\\/gu, "/").startsWith(root);
   });
   return match?.[1];
