@@ -306,7 +306,7 @@ const docsIndex = [
   {
     href: "discord-intelligence.html",
     title: "Discord Intelligence",
-    text: "Discord Intelligence covers intent analyzer, permission intelligence, role hierarchy analysis, invite scope analysis, compatibility checker, tsundere doctor, deprecated API detection, migration assistant, Discord version reports, hover warnings, required intents, GuildMessages, MessageContent, GuildMembers, GuildPresences, BanMembers, ModerateMembers, ManageChannels, OAuth scopes, permission dashboard, and deployment warnings."
+    text: "Discord Intelligence explains the current Discord-aware tooling in Tsundere. It covers compiler diagnostics in src compiler transpile, strict mode, DISCORD010 custom ID limits, DISCORD005 embed title and description limits, DISCORD002 intent warnings, DISCORD003 MessageContent warnings, DISCORD020 permission warnings for ban timeout kick channels create roles create setRole addRole fetchAuditLogs, YURI101 any warnings, VS Code Discord completions and hovers in packages vscode-tsundere discordIntellisense, client on event completions, interaction reply and narrowing completions, Slash Embed Button Modal Select Components Router suggestions, auto imports from @tsundere/discord, type bridge sync in src type-bridge, tsundere types sync inspect doctor clean, .yuri-cache discord graph types events builders imports docs cache files, package watchers, and what is not built yet such as dashboards OAuth scope reports full role hierarchy analysis and Discord API compatibility reports."
   },
   {
     href: "visualizer.html",

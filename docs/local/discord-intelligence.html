@@ -25,45 +25,199 @@
     </aside>
     <main class="mx-auto w-full max-w-5xl px-6 py-10">
       <h1 class="text-4xl font-bold tracking-tight">Discord Intelligence</h1>
-      <p class="mt-4 text-lg leading-8 text-slate-600">Discord failures often come from missing intents, permissions, scopes, hierarchy position, deprecated APIs, or changed payloads. Tsundere should surface those problems before deployment.</p>
+      <p class="mt-4 text-lg leading-8 text-slate-600">Discord Intelligence is Tsundere's name for the Discord-aware checks and editor metadata that exist around `.yuri` code. In the current repo, this is not one finished dashboard. It is three working foundations: compiler diagnostics in `src/compiler/transpile.ts`, VS Code completions and hovers in `packages/vscode-tsundere/src/discordIntellisense.ts`, and type metadata generation in `src/type-bridge`.</p>
+      <p class="mt-4 leading-8 text-slate-600">The important expectation: Tsundere can catch some common Discord mistakes early, but it does not replace Discord's developer portal, bot permissions, runtime testing, or Discord.js documentation. Use it as a helpful warning layer, not as proof that a bot is deploy-ready.</p>
 
-      <section class="mt-10 grid gap-4 md:grid-cols-2">
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Intent Analyzer</h2>
-          <p class="mt-3 text-slate-600">Analyze events like `messageCreate`, `guildMemberAdd`, and `presenceUpdate` and warn when required intents such as `GuildMessages`, `MessageContent`, `GuildMembers`, or `GuildPresences` are missing.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Permission Intelligence</h2>
-          <p class="mt-3 text-slate-600">Hover and diagnostics for operations like ban, timeout, channel create, role edit, and audit logs with required bot permissions, user permissions, hierarchy notes, and runtime risks.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Compatibility Checker</h2>
-          <p class="mt-3 text-slate-600">`tsundere doctor` should report Discord API version, wrapper version, package version, deprecated APIs, removed endpoints, changed intents, and migration suggestions.</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 p-5">
-          <h2 class="text-xl font-semibold">Dashboards</h2>
-          <p class="mt-3 text-slate-600">VS Code panels should summarize required intents, missing permissions, OAuth scopes, and compatibility warnings as code changes.</p>
+      <section class="mt-10 rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 class="text-xl font-semibold text-amber-950">What This Page Teaches</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-amber-950">
+          <li>Which Discord diagnostics are implemented today.</li>
+          <li>Why strict mode controls most compiler intelligence.</li>
+          <li>What the VS Code extension suggests and when suggestions appear.</li>
+          <li>What `tsundere types sync`, `inspect`, `doctor`, and `clean` write or read.</li>
+          <li>Which roadmap ideas, such as dashboards and full compatibility checks, are not built yet.</li>
+          <li>How to troubleshoot missing or noisy Discord intelligence.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">The Three Current Layers</h2>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Layer</th><th class="px-4 py-3">Source</th><th class="px-4 py-3">Current Behavior</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">Compiler diagnostics</td><td class="px-4 py-3">`src/compiler/transpile.ts`</td><td class="px-4 py-3">Warns or errors on selected Discord limits, intents, message content, and permission-sensitive operations when `strict` is enabled.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Editor intelligence</td><td class="px-4 py-3">`packages/vscode-tsundere/src/discordIntellisense.ts`</td><td class="px-4 py-3">Adds completions, hovers, and signature help for common Discord events, interactions, builders, components, modals, selects, router helpers, and auto imports.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Type bridge</td><td class="px-4 py-3">`src/type-bridge`</td><td class="px-4 py-3">Extracts installed Discord package declarations and writes `.yuri-cache` JSON metadata for events, builders, imports, docs, types, and cache keys.</td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
       <section class="mt-10">
-        <h2 class="text-2xl font-semibold">Example Diagnostic</h2>
-        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>guild.members.ban(user)
+        <h2 class="text-2xl font-semibold">Compiler Diagnostics</h2>
+        <p class="mt-4 leading-7 text-slate-700">The compiler adds Discord diagnostics only when config has `strict: true`. That is the default in generated projects. The diagnostics are source-pattern checks, not a full semantic analyzer, so they are intentionally narrow. They are still useful because they catch mistakes that often cause Discord bots to fail after deployment.</p>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Code</th><th class="px-4 py-3">When It Appears</th><th class="px-4 py-3">Severity</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">DISCORD010</td><td class="px-4 py-3">A `customId` string is longer than Discord's 100 character limit.</td><td class="px-4 py-3">error</td></tr>
+              <tr><td class="px-4 py-3 font-mono">DISCORD005</td><td class="px-4 py-3">An embed `.title("...")` exceeds 256 characters or `.description("...")` exceeds 4096 characters.</td><td class="px-4 py-3">error</td></tr>
+              <tr><td class="px-4 py-3 font-mono">DISCORD002</td><td class="px-4 py-3">An event such as `messageCreate`, `guildMemberAdd`, `presenceUpdate`, or `voiceStateUpdate` appears without the matching intent name in source.</td><td class="px-4 py-3">warning</td></tr>
+              <tr><td class="px-4 py-3 font-mono">DISCORD003</td><td class="px-4 py-3">A message event reads `message.content` or `msg.content` without an obvious `MessageContent` intent.</td><td class="px-4 py-3">warning</td></tr>
+              <tr><td class="px-4 py-3 font-mono">DISCORD020</td><td class="px-4 py-3">Source appears to call ban, timeout, kick, channel creation, role operations, or audit log reads.</td><td class="px-4 py-3">warning</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 leading-7 text-slate-700">The same strict path also warns with `YURI101` when code uses `any`. That warning is not Discord-specific, but it matters for Discord bots because untyped interaction handlers are where many runtime mistakes hide.</p>
+      </section>
 
-Required Bot Permissions:
-- BanMembers
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Intent Warnings</h2>
+        <p class="mt-4 leading-7 text-slate-700">Intent warnings are simple and practical. The compiler searches for `.on("eventName"` patterns and checks whether the required intent text appears somewhere in the source. It does not parse the final client options object semantically, and it does not check the Discord developer portal.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>import { Client, Intents } from "@tsundere/discord"
 
-Required Intent:
-- GuildMembers
+const client = new Client({
+  token: env.DISCORD_TOKEN,
+  intents: [Intents.Guilds]
+})
 
-Hierarchy Requirements:
-- Bot role must be above target member
-- Invoking user must be above target member
+client.on("messageCreate", async (message) =&gt; {
+  log(message.content)
+})</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">With strict diagnostics enabled, this shape can warn that `messageCreate` needs `GuildMessages` and that reading message content may need `MessageContent`. You still need to enable privileged intents in Discord's developer portal when Discord requires that outside your code.</p>
+      </section>
 
-Potential Runtime Errors:
-- Missing Permissions
-- Missing Access
-- Unknown Member</code></pre>
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Permission Warnings</h2>
+        <p class="mt-4 leading-7 text-slate-700">Permission diagnostics look for method patterns that commonly need bot permissions or role hierarchy checks. They do not inspect your server roles, OAuth invite URL, or runtime member hierarchy.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Warned Operations</h3>
+            <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+              <li>`ban(...)` needs `BanMembers`.</li>
+              <li>`timeout(...)` needs `ModerateMembers`.</li>
+              <li>`kick(...)` needs `KickMembers`.</li>
+              <li>`channels.create(...)` or `createChannel(...)` needs `ManageChannels`.</li>
+              <li>`roles.create(...)`, `setRole`, or `addRole(...)` needs `ManageRoles`.</li>
+              <li>`fetchAuditLogs(...)` needs `ViewAuditLog`.</li>
+            </ul>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">What to Check Manually</h3>
+            <ul class="mt-3 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+              <li>The bot invite includes the required permission.</li>
+              <li>The bot role is above the target role or member.</li>
+              <li>The invoking user has the permission your command expects.</li>
+              <li>The server has enabled required privileged intents.</li>
+              <li>Your error handling covers Discord `Missing Permissions` and `Missing Access` responses.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Embed and Custom ID Limits</h2>
+        <p class="mt-4 leading-7 text-slate-700">The compiler currently catches two common hard limits directly in source strings: custom IDs longer than 100 characters, embed titles longer than 256 characters, and embed descriptions longer than 4096 characters.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>Button.primary("really-long-custom-id...")
+
+Embed.create()
+  .title("Short titles are fine")
+  .description("Long literal descriptions are checked when they appear in source")</code></pre>
+        <p class="mt-4 leading-7 text-slate-700">Dynamic strings are not fully evaluated. If your embed description comes from variables, database content, API data, or joined arrays, validate it at runtime too.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">VS Code Intelligence</h2>
+        <p class="mt-4 leading-7 text-slate-700">The VS Code extension contributes language support for `.yuri` files and registers a Discord completion provider. The provider is source-pattern based: it checks recent text near the cursor and suggests relevant completions for common Discord shapes.</p>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">Typing Context</th><th class="px-4 py-3">Suggested Items</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">client.on("...</td><td class="px-4 py-3">Event names such as `ready`, `interactionCreate`, `messageCreate`, `guildMemberAdd`, `voiceStateUpdate`, shard events, and more.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">interaction.</td><td class="px-4 py-3">Reply helpers, narrowing helpers, `user`, `guild`, `member`, `commandName`, `options`, and `customId`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Slash.command(...).</td><td class="px-4 py-3">Command builder methods such as `description`, `option`, `subcommand`, `group`, `permission`, `guildOnly`, `nsfw`, `autocomplete`, and `register`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Embed.create().</td><td class="px-4 py-3">Embed builder methods such as `title`, `description`, `color`, `field`, `footer`, `author`, `thumbnail`, `image`, `timestamp`, and `validate`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">Button. / Modal. / Select. / Components.</td><td class="px-4 py-3">Component, modal, select, and Components v2 helper suggestions.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">No Discord import yet</td><td class="px-4 py-3">Auto-import candidates such as `Client`, `Intents`, `Embed`, `Button`, `Slash`, `Modal`, and `Component`.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 leading-7 text-slate-700">The extension also registers hover and signature help for the same completion specs. It is not a full semantic language server for every Discord.js type yet.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Type Metadata Commands</h2>
+        <p class="mt-4 leading-7 text-slate-700">The type bridge can scan installed Discord-related packages and write JSON metadata under `.yuri-cache`. It looks for packages such as `discord.js`, `@discordjs/builders`, `discord-api-types`, `@discordjs/rest`, `@discordjs/ws`, and `@tsundere/discord`. If it cannot find installed type packages, it falls back to a small built-in graph for core Tsundere Discord types.</p>
+        <pre class="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-5 text-sm text-slate-100"><code>tsundere types sync
+tsundere types inspect Client
+tsundere types doctor
+tsundere types clean</code></pre>
+        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th class="px-4 py-3">File</th><th class="px-4 py-3">Purpose</th></tr></thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="px-4 py-3 font-mono">.yuri-cache/discord.graph.json</td><td class="px-4 py-3">Extracted type graph from installed Discord packages or fallback metadata.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.yuri-cache/discord.types.json</td><td class="px-4 py-3">Yuri-facing mapped type metadata used by inspect and editor tooling.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.yuri-cache/discord.events.json</td><td class="px-4 py-3">Known event names, parameters, and required intents from `src/type-bridge/discord.ts`.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.yuri-cache/discord.builders.json</td><td class="px-4 py-3">Builder methods extracted from the type graph.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.yuri-cache/discord.imports.json</td><td class="px-4 py-3">Auto-import symbol mapping for known Discord exports.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.yuri-cache/discord.docs.json</td><td class="px-4 py-3">Extracted docs, diagnostic docs, and interaction narrowing metadata.</td></tr>
+              <tr><td class="px-4 py-3 font-mono">.yuri-cache/discord.cache.json</td><td class="px-4 py-3">Cache key and source package metadata.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">How the VS Code Extension Keeps Types Fresh</h2>
+        <p class="mt-4 leading-7 text-slate-700">When the extension activates in a workspace, it schedules `tsundere types sync` unless `.yuri-cache/discord.cache.json` already exists on workspace open. It also watches `package.json`, `pnpm-lock.yaml`, `package-lock.json`, `node_modules/@tsundere/discord/package.json`, and `node_modules/discord.js/package.json`; when those files change, it schedules another sync in a terminal named `Tsundere Types`.</p>
+        <p class="mt-4 leading-7 text-slate-700">That means type metadata can lag behind package changes until sync runs. If completions or inspect output seem stale, run `tsundere types sync` yourself.</p>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">What Is Not Built Yet</h2>
+        <p class="mt-4 leading-7 text-slate-700">Older roadmap language can make Discord Intelligence sound broader than the current code. These items are still future work or only partial foundations:</p>
+        <ul class="mt-4 list-disc space-y-2 pl-6 leading-7 text-slate-700">
+          <li>No VS Code dashboard currently summarizes all intents, permissions, OAuth scopes, and command risks.</li>
+          <li>`tsundere doctor` checks platform/runtime/package optimizer state, but it does not yet report Discord API compatibility or deprecated Discord APIs.</li>
+          <li>Role hierarchy checks are warnings and guidance only; Tsundere cannot know your server role order at compile time.</li>
+          <li>OAuth scope analysis is not implemented as a CLI report.</li>
+          <li>Deprecated API detection depends on extracted type docs and is not yet a full migration assistant.</li>
+          <li>Compiler diagnostics are regex/source-pattern checks, not a full TypeScript semantic analysis pass.</li>
+        </ul>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Troubleshooting</h2>
+        <div class="mt-4 space-y-4">
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">No Discord diagnostics appear</h3>
+            <p class="mt-3 leading-7 text-slate-700">Check `strict` in `tsundere.config.json`. Discord diagnostics are added through the strict path. Also check `diagnostics.warnings`; warning diagnostics can be hidden if warnings are disabled.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">Intent warning appears even though the bot works</h3>
+            <p class="mt-3 leading-7 text-slate-700">The compiler only searches source text for intent names. If you build intents dynamically or import them from another file, the warning may be conservative. Keep the warning in mind, then verify the final client config and Discord developer portal settings.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">`types sync` cannot find Discord packages</h3>
+            <p class="mt-3 leading-7 text-slate-700">Run `tsundere install` in the project, or install the Discord runtime and dependencies. For a Discord project, `tsundere types doctor` will suggest `tsundere add @tsundere/discord discord.js` when no installed type sources are found.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-5">
+            <h3 class="font-semibold">VS Code completions look generic</h3>
+            <p class="mt-3 leading-7 text-slate-700">The completion provider uses local text context. Add an `@tsundere/discord` import or write the expected builder shape, then try again. Restart the extension window if the provider was not activated for `.yuri` files.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <h2 class="text-2xl font-semibold">Related Pages</h2>
+        <div class="mt-4 grid gap-3 md:grid-cols-2">
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="discord.html">Discord Guide</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="discord-events.html">Discord Events</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="discord-layouts.html">Discord Layouts</a>
+          <a class="rounded-lg border border-slate-200 p-4 hover:border-pink-300" href="roadmap.html">Roadmap</a>
+        </div>
       </section>
     </main>
   </div>
